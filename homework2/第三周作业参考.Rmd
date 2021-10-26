@@ -1,0 +1,390 @@
+---
+title: "第三周作业参考"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="60")
+opts_knit$set(width=75)
+```
+
+## 1.2题目描述
+
+&emsp;&emsp;**试证明**：如果$X_1,X_2,...,X_n$独立同分布且来自$[0,1]$上的均匀分布，则对任意的$s>k,X_{(s)}-X_{(k)}$服从贝塔分布，第一个参数为$(s-k)$，第二个参数为$(n-s+k+1)$。
+
+## 1.2题目解答
+
+&emsp;&emsp;**证明**：
+由于$X_i，i=1,2,...,n$独立同分布且来自$[0,1]$上的均匀分布,且$X_{(s)},X_{(k)}$为次序统计量，可以得到$X_{(s)}$的概率密度函数为：
+$$
+p\left( x \right) =\frac{n!}{\left( s-1 \right) !\left( n-s \right) !}x^{s-1}\left( 1-x \right) ^{n-s}
+$$
+&emsp;&emsp;$X_{(k)}$的概率密度函数为：
+$$
+p\left( x \right) =\frac{n!}{\left( k-1 \right) !\left( n-k \right) !}x^{k-1}\left( 1-x \right) ^{n-k}
+$$
+&emsp;&emsp;$X_{(s)},X_{(k)}$的联合概率密度函数为：
+$$
+p_{X_{\left( s \right)},X_{\left( k \right)}}\left( x,y \right) =\frac{n!}{\left( k-1 \right) !\left( s-k-1 \right) !\left( n-s \right) !}x^{k-1}\left( 1-y \right) ^{n-s}\left( y-x \right) ^{s-k-1}
+$$
+&emsp;&emsp;做变量替换：
+$$
+\begin{aligned}
+& V=X_{\left( s \right)}-X_{\left( k \right)}
+\\
+& W=X_{\left( k \right)} 
+\end{aligned}
+$$
+&emsp;&emsp;可以计算出雅可比行列式的绝对值：
+$$
+\left| \left| A \right| \right|=\left| \frac{\partial \left( V,W \right)}{\partial \left( X_{\left( s \right)},X_{\left( k \right)} \right)} \right|=\left| \left| \begin{matrix}{}
+	1&		-1\\
+	0&		\,\,1\\
+\end{matrix} \right| \right|=1
+$$
+&emsp;&emsp;从而可以得出$V,W$的联合概率密度函数：
+$$
+p_{V,W}\left( v,w \right) =\frac{n!}{\left( k-1 \right) !\left( s-k-1 \right) !\left( n-s \right) !}w^{k-1}\left( 1-v-w \right) ^{n-s}v^{s-k-1}
+$$
+&emsp;&emsp;接下来对该联合概率密度函数关于$W$进行积分即可得到$V$的概率密度函数，注意到$X_{(s)},X{(k)}$的取值范围均为$(0,1)$,从而得出$W$的积分上限为$1-v$，积分过程如下：
+$$
+\begin{aligned}
+p\left( v \right) &=\int_0^{1-v}{p\left( v,w \right) dw}
+\\
+& =\frac{n!}{\left( k-1 \right) !\left( s-k-1 \right) !\left( n-s \right) !}v^{s-k-1}\int_0^{1-v}{w^{k-1}\left( 1-v-w \right) ^{n-s}dw}
+\end{aligned}
+$$
+&emsp;&emsp;注意到积分^[https://math.stackexchange.com/q/68749]：
+$$
+\int_0^{1-v}{w^{k-1}\left( 1-v-w \right) ^{n-s}dw}=\frac{\Gamma \left( k \right) \Gamma \left( n-s+1 \right)}{\Gamma \left( n+k-s+1 \right)}\left( 1-v \right) ^{n+k-s}
+$$
+&emsp;&emsp;将伽玛函数换成阶乘的形式，整合到原式中可得$V$的概率密度函数为：
+$$
+p\left( v \right) =\frac{\Gamma \left( n+1 \right)}{\Gamma \left( s-k \right) \Gamma \left( n+k-s+1 \right)}v^{s-k-1}\left( 1-v \right) ^{n+k-s} \qquad 0<v<1
+$$
+&emsp;&emsp;即为第一个参数为$(s-k)$，第二个参数为$(n-s+k+1)$的贝塔分布的概率密度函数，从而原命题得证。
+
+## 1.3题目描述
+
+&emsp;&emsp;**试证明**：如果$X_1,X_2,...,X_n$独立同分布且来自均值为$0$，方差为$\sigma^2$的正态分布，则$\underset{n\rightarrow +\infty}{\lim}E\left( \frac{1}{S} \right) =\frac{1}{\sigma}$。
+
+##1.3题目解答
+
+&emsp;&emsp;**证明**：已经总体分布为正态分布，构造随机变量$Y$满足：
+$$
+Y=\frac{\left( n-1 \right) S^2}{\sigma ^2}\sim \chi ^2\left( n-1 \right) =Ga\left( \frac{n-1}{2},\frac{1}{2} \right) 
+$$
+&emsp;&emsp;由上式可得：
+$$
+\frac{1}{S}=\frac{\sqrt{n-1}}{\sigma}\frac{1}{\sqrt{Y}}
+$$
+&emsp;&emsp;从而计算$\frac{1}{S}$的期望首先得求出$\frac{1}{\sqrt{Y}}$的期望。
+计算$\frac{1}{\sqrt{Y}}$的期望步骤如下：
+$$
+\begin{aligned}
+E\left( \frac{1}{\sqrt{Y}} \right) &=\int_0^{+\infty}{\begin{array}{c}
+	y^{-\frac{1}{2}}\frac{\left( \frac{1}{2} \right) ^{\frac{n-1}{2}}}{\Gamma \left( \frac{n-1}{2} \right)}y^{\frac{n-1}{2}}e^{-\frac{y}{2}}dy\\
+\end{array}}
+\\
+&=\frac{\left( \frac{1}{2} \right) ^{\frac{n-1}{2}}}{\Gamma \left( \frac{n-1}{2} \right)}\int_0^{+\infty}{y^{\frac{n}{2}-2}e^{-\frac{y}{2}}}dy
+\\
+&=\frac{\left( \frac{1}{2} \right) ^{\frac{n-1}{2}}}{\Gamma \left( \frac{n-1}{2} \right)}\int_0^{+\infty}{2^{\frac{n}{2}-1}x^{\frac{n}{2}-2}e^{-x}dx}\,\,       \left( let\,\,y=2x \right) 
+\\
+&=\frac{1}{\sqrt{2}}\frac{\Gamma \left( \frac{n-2}{2} \right)}{\Gamma \left( \frac{n-1}{2} \right)}
+\end{aligned}
+$$
+&emsp;&emsp;由此可得：
+$$
+E\left( \frac{1}{S} \right) =\frac{\sqrt{n-1}}{\sigma}\frac{1}{\sqrt{2}}\frac{\Gamma \left( \frac{n-2}{2} \right)}{\Gamma \left( \frac{n-1}{2} \right)}
+$$
+&emsp;&emsp;由stirling公式^[$\Gamma \left( x \right) \approx \sqrt{2\pi}e^{-x}x^{x-\frac{1}{2}}$]可得:
+$$
+\frac{\Gamma \left( \frac{n-2}{2} \right)}{\Gamma \left( \frac{n-1}{2} \right)}=e^{\frac{1}{2}}\left( \frac{n-2}{n-1} \right) ^{\frac{n-3}{2}}\frac{\sqrt{2}}{\sqrt{n-1}}
+$$
+&emsp;&emsp;从而可得:
+$$
+\begin{aligned}
+E\left( \frac{1}{S} \right) & =\frac{\sqrt{n-1}}{\sigma}\frac{1}{\sqrt{2}}\frac{\sqrt{2}}{\sqrt{n-1}}e^{\frac{1}{2}}\left( \frac{n-2}{n-1} \right) ^{\frac{n-3}{2}}
+\\
+& =\frac{1}{\sigma}e^{\frac{1}{2}}\left( 1-\frac{1}{n-1} \right) ^{\frac{n-3}{2}}
+\\
+& =\frac{1}{\sigma}e^{\frac{1}{2}}\left[ \left( 1-\frac{1}{n-1} \right) ^{-\left( n-1 \right)} \right] ^{-\frac{n-3}{2\left( n-1 \right)}}
+\end{aligned}
+$$
+&emsp;&emsp;最终得到：
+$$
+\underset{n\rightarrow +\infty}{\lim}E\left( \frac{1}{S} \right) =\frac{1}{\sigma}e^{\frac{1}{2}}e^{-\frac{1}{2}}=\frac{1}{\sigma}
+$$
+
+## 1.4题目描述
+
+&emsp;&emsp;**试证明**：思考布里斯托博士在不知道奶茶加奶顺序的前提下，将8杯奶茶全部猜对的可能性。
+
+## 1.4题目解答
+
+&emsp;&emsp;**证明**：假设8杯奶茶各不相同，则排列共有$A_{8}^{8}$种。可实际情况是4杯奶茶先加茶再加奶，4杯奶茶先加奶再加茶，从而利用消序法得出真实的排列共有$\frac{A_{8}^{8}}{A_{4}^{4}A_{4}^{4}}=70$种，从而猜对的概率为$\frac{1}{70}$。
+
+## 1.5题目描述
+将备择假设与原假设对调，以T为统计量，当样本量n=100时，对C=113和117的两个拒绝与绘制势函数曲线图。  在犯第一、二类错误概率相等时，给出弃权域的参数范围，比较两个检验域有怎样的不同。 
+
+## 1.5题目解答
+
+### 绘制犯两类错误的概率曲线
+```{r }
+n <- 100
+#犯第一类错误的概率
+curve(1-ppois(117-1,n*lambda), from = 0, to = 1, 
+      type = "l", xname = "lambda", xlab =expression(lambda),
+      ylab = "犯两类错误的概率（势）",lwd=2,
+       xlim = c(0,2),ylim=c(0,1))
+curve(1-ppois(113-1,n*lambda), from = 0, to = 1, add = T,col="red",
+      type = "l", xname = "lambda", xlim = c(0,2),ylim=c(0,1))
+
+segments(1,0,1,1)
+#犯第二类错误的概率
+curve(ppois(117-1,n*lambda), from = 1, to = 2, add = T, lwd=2,
+      type = "l", xname = "lambda", xlim = c(0,2),ylim=c(0,1))
+curve(ppois(113-1,n*lambda), from = 1, to = 2, add = T, col="red",
+      type = "l", xname = "lambda", xlim = c(0,2),ylim=c(0,1))
+legend("topright",inset=.05,c("C=117","C=113"),lty=c(1,1),
+       col =c("black","red"))
+```
+
+### 计算弃权域参数范围
+两类错误的概率相同，取值为参数$\lambda=1$时的犯第一类错误概率$\alpha$(即$\alpha$的最大取值)
+```{r }
+#C=117时的犯第一类错误概率的最大值
+alpha1 = 1-ppois(117-1,n*1)
+#经判断大于α=0.05
+alpha=0.05  #显著性水平设为0.05
+f1 <- function(lambda){
+  return(1-ppois(117-1,n*lambda)-alpha1)
+}
+f2 <- function(lambda){
+  return(ppois(117-1,n*lambda)-alpha1)
+}
+root1 <- uniroot(f1,c(0,1))
+a1=root1$root
+root2 <- uniroot(f2,c(1,2))
+a2=root2$root
+cat("C=117时弃权域参数范围：(",a1,",",a2,")")
+
+
+
+#C=113时的犯第一类错误概率的最大值
+alpha2 = 1-ppois(113-1,n*1)
+alpha=0.05  #显著性水平设为0.05
+f1 <- function(lambda){
+  return(1-ppois(113-1,n*lambda)-alpha2)
+}
+f2 <- function(lambda){
+  return(ppois(113-1,n*lambda)-alpha2)
+}
+root1 <- uniroot(f1,c(0,1))
+b1=root1$root
+root2 <- uniroot(f2,c(1,2))
+b2=root2$root
+cat("C=113时弃权域参数范围：(",b1,",",b2,")")
+
+```
+**结论**：C=117的弃权域较宽，因为C=117更倾向于支持备择假设，从极大似然角度理解，这一结果与更大的λ相对应，故出现较小的λ时，我们更有可能去不接受原假设或者放弃选择备择假设，这是合理的。
+
+## 问题1(2)描述
+绘制生存函数曲线，比较药效，给出半衰期指标，画出95%置信带，观察负对数生存函数对持续时间的作用，观察斜率的变化，分析危险率较大的位置。    
+
+## 问题1(2)题目解答
+
+### 创建数据框
+```{r}
+subject <- c('BG','JF','BS','SI','BW','TS','GM','SS','MU','OS')
+no <- c(174,224,260,255,165,237,191,100,115,189)
+Placebo <- c(263,213,231,291,168,121,137,102,89,433)
+med1 <- c(105,103,145,103,144,94,35,133,83,237)
+med2 <- c(141,168,78,164,127,114,96,222,165,168)
+med3 <- c(199,143,113,225,176,144,87,120,100,173)
+med4 <- c(108,341,159,135,239,136,140,134,185,188)
+med5 <- c(141,184,125,277,194,155,121,129,79,317)
+a <- data.frame("被试者"=subject,"无药"=no,"安慰剂"=Placebo,
+                'Papaverine'=med1,'Aminophylline'=med2,
+                'Morphine'=med3,'Pentobarbital'=med4,'Tripelennamine'=med5)
+
+#宽表变长表
+library(reshape2)
+b <- melt(a,id.vars="被试者",
+          variable.name="treatment",value.name="time")
+b$status=rep(1,70)
+```
+
+### 绘制经验生存函数
+```{r include=FALSE}
+library(dplyr)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(ggpubr)
+library(RColorBrewer)
+```
+
+
+```{r }
+fit <- survfit(Surv(time,status) ~ treatment, data = b)
+#levels(b$treatment)
+ggsurvplot(fit,
+           palette=brewer.pal(8,"Set3"),
+           ggtheme = theme_bw())
+           
+```
+
+研究不同治疗药物下瘙痒时间的持续情况，生存函数如上图所示。  
+黄色线为安慰剂组，安慰剂组比无药组下降得更缓慢，比无药组的最长瘙痒时间长了超过两百天。  
+而从药效上来讲，越快结束瘙痒的方法效果更好。几种方法按照效果由好到坏，基本可以这样排序：  
+
+Papaverine > Aminophylline > Morphine > Pentobarbital > Tripelennamine
+
+```{r}
+#计算半衰期
+for (i in 2:8)
+{
+  data <-a[,i]
+  data.sort <- sort(data)
+  data.rank <- rank(data.sort)
+  data.cdf <- data.rank/length(data)
+  data.surv <- 1-data.cdf
+  half_life <- data.sort[data.surv>0.4&data.surv<0.6] 
+  cat(half_life," ")
+}
+```
+按照上面的顺序，加入半衰期指标，汇总如下： 
+
+Papaverine(半衰期103) > Aminophylline(半衰期141) > Morphine(半衰期143) > Pentobarbital(半衰期140) > Tripelennamine(半衰期141)
+
+### 添加置信区间带
+```{r}
+
+ggsurvplot(fit,
+           conf.int=TRUE,#添加置信区间带
+           conf.int.alpha=0.2,  #置信区间透明度
+           palette=brewer.pal(8,"Set3"),
+           ggtheme = theme_bw())
+           
+```
+
+
+添加生存曲线的95%置信带，如上图。
+
+### 绘制危险函数  
+
+```{r}
+
+ggsurvplot(fit, fun="cumhaz",
+           palette=brewer.pal(8,"Set3"),
+           ggtheme = theme_bw())
+           
+
+```
+
+**结论**：观察可知，药物治疗使止痒率增加的速度变快。时间很大时负对数经验生存函数会变得不稳定，后面的部分被忽略掉。
+几种药物到达最大危险率的顺序（效果由好到坏）为：   
+Papaverine > Aminophylline > Morphine > Pentobarbital > Tripelennamine  
+与观察经验生存函数得到的排序相同。
+几种药物在纵坐标1.25处危险率都有了较大的变化，对应的横坐标大致分别为：  
+145,170,175,190,195
+
+## 问题2(a)描述
+
+&emsp;&emsp;经验分布函数是哪个随机变量的分布，这个随机变量是怎样从原始变量转化而来？
+
+## 问题2(a)问题解答
+
+&emsp;&emsp;经验分布函数的定义：
+$$
+\hat{F}_n\left( x \right) =\frac{1}{n}\sum_{i=1}^n{I\left( X_i<x \right)}
+$$
+&emsp;&emsp;令随机变量：
+$$
+X=\begin{cases}
+	x_1\,\,\quad p=\frac{1}{n}\\
+	x_2\,\,\quad p=\frac{1}{n}\\
+	...\\
+	x_n\,\,\quad p=\frac{1}{n}\\
+\end{cases}
+$$
+&emsp;&emsp;其中$x_i(i=1,2,...,n)$是对总体的$n$个观测值，则该随机变量的分布即为经验分布函数。这个随机变量是原随机变量获得$n$个观测值后我们等可能看待这$n$个观测值，从而将其看成离散随机变量$X$等可能取的值。
+
+## 问题2(b)描述
+
+&emsp;&emsp;请根据数据wage.s,制作所有工资的经验分布函数，通过DKW不等式给出分布函数的置信区间
+
+## 问题2(b)解答
+```{r}
+wage <-  read.table("wage_s.txt",fill=TRUE)
+wage <- as.matrix(wage)
+wage <- as.vector(t(wage))
+wage<-na.omit(wage)
+wage.sort=sort(wage)
+wage.rank=rank(wage.sort)
+wage.cdf=wage.rank/length(wage)
+plot(wage.sort,wage.cdf,xlab = "排序后的工资",ylab = "经验分布函数")
+N=length(wage)
+segments(wage.sort[1:N-1],wage.cdf[1:N-1],
+         +wage.sort[2:N],wage.cdf[1:N-1])
+alpha=0.05                 #95%的置信度
+band=sqrt(1/(2*N)*log(2/alpha))   #根据DKW定理确定的置信区间的宽度
+lower.95=wage.cdf-band
+upper.95=wage.cdf+band
+lines(wage.sort,lower.95,lty=2)
+lines(wage.sort,upper.95,lty=2)
+
+section=data.frame(wage.sort,wage.cdf,lower.95,upper.95)
+names(section)=c("wage","cdf-value","5%lower","5%upper")
+section      #95%置信度的经验函数上下界
+```
+
+## 问题2(c)描述
+
+&emsp;&emsp;在第七题基础上，每一次有放回抽取10个数据尝试分布函数的点估计，一共做30次独立的点估计，将30次的结果画在同一张图上。请绘制上述方法的流程图，编写函数实现以上任务，再分析a=0.05的分布函数置信区间带宽。
+
+## 问题2(c)解答
+
+**这一题由于题目中“将1000次独立的观测画在一张图上”说法有些问题，所以同学们有多种做法。题目的原意是想让大家画出30条经验分布函数，每条经验分布函是用有放回抽取的10个样本得到，具体做法大家应该都会，这题是题目描述的问题，大家注意一下做法即可**
+
+### 绘制流程图
+![](流程图.png)
+
+### 编程实现
+
+```{r}
+for (i in 1:30) {
+ y<-sample(wage,10,replace=T) #有放回抽样
+ y.sort=sort(y)
+ y.rank=rank(y.sort)
+ y.cdf=y.rank/length(y)
+ par(new=T)
+ if(i==1){
+ plot(y.sort,y.cdf,main="随机抽样经验分布函数曲线图")
+ }
+ else{
+    plot(y.sort,y.cdf,yaxt="n",xaxt="n")
+ }
+lines(y.sort,y.cdf,lty=1,col=i)
+}
+```
+
+### 带宽分析
+由DKW定理，经验分布函数的置信区间的带宽只和样本量n和α 有关
+```{r}
+alpha=0.05 #95%的置信度
+n=10       #样本个数
+band=sqrt(1/(2*n)*log(2/alpha))   #根据DKW定理确定的置信区间的宽度
+2*band                #置信区间带宽
+```
+
+
+

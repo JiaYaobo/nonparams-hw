@@ -1,0 +1,296 @@
+---
+title: "2019202265-贾耀博-第六周作业"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+# 1
+
+**超市经理想了解每位顾客在该超市购买的商品平均件数是否为10件，随机观察了12名顾客，得到如下数据，采用Wilcoxon符号秩检验进行决策，将其结果与符号检验的结果进行比较**
+
+回顾：根据上次符号检验的决策结果，在显著性水平0.05之下，不拒绝原假设，认为这些数据的中心与10不存在显著性差异，下面使用Wilcoxon符号秩检验
+```{r}
+items<-c(22,9,4,5,1,16,15,26,47,8,31,7)
+wilcox.test(items, mu = 10)
+
+```
+
+根据Wilcoxon检验pvalue=0.2892>0.05,在显著性水平0.05之下，不拒绝原假设，认为这些数据的中心与10不存在显著性差异,最终得到的结果与符号检验相同
+
+# 2
+
+**下表的数据是两场篮球比赛中三分球进球次数，考察两场联赛三分球进球次数是否存在显著性差异**
+
+从总体上来看，三分球命中数有下降趋势，因此进行单边检测三分球命中数是否下降
+
+## (1)
+
+**采用符号检验**
+
+```{r}
+game1<-c(91,46,108,99,110,105,191,57,34,81)
+game2<-c(81,51,63,51,46,45,66,64,90,28)
+dt1<-data.frame(g1=game1,g2=game2)
+pos<-sum(game1-game2>0)
+neg<-length(game1)-pos
+z.score<-(pos-5+0.5)/sqrt(10/4)
+1-pnorm(z.score)
+```
+
+运用符号检验，计算得到pvalue=0.057>0.05,因此不能拒绝原假设，也就是两场联赛三分球进球次数无显著性下降
+
+## (2)
+
+**采用配对Wilcoxon符号秩检验**
+
+```{r}
+wilcox.test(game1,game2,paired = TRUE, alternative = "greater")
+```
+
+运用wilcoxon配对符号秩检验，计算得到pvalue=0.042<0.05, 因此拒绝原假设，认为三分球命中数有明显下降
+
+## (3)
+
+**在这些数据中哪个检验更好？为什么？**
+
+对这一数据，Wilcoxon检验更好，这是因为Wilcoxon符号秩检验对关于差异有一个对称性要求，然而符号检验并不需要，从而这一差异导致两种检验的有效性会根据数据的尾部分布的特点决定，根据本数据，我们观察一下两场比赛差异的分布
+
+```{r}
+dif<-game1-game2
+hist(dif)
+```
+
+可以发现数据大概以一个大于0的数呈现对称分布，因此采用Wilcoxon配对符号秩检验更合理。
+
+# 3
+
+**一个监听装置收到如下信号，能否说明是纯粹随机干扰信号吗**
+```{r}
+library(tseries)
+s<-c(0,1,0,1,1,1,0,0,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,1,1,0,1,0,1,0,0,0,1,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0)
+runs.test(factor(s))
+```
+
+通过随机游程检验，得到pvalue=0.7123>0.05,从而不拒绝原假设，认为信号是随机干扰
+
+# 4
+
+**某品牌消毒液质检部要求每瓶消毒液的平均容积为500ml，现从流水线上的某台装瓶机器上随机抽取20瓶，测得其容量如下表所示，试检查这台机器装多装少是否随机？**
+
+```{r}
+x<-c(509,505,502,501,493,498,497,502,504,506,505,508,498,495,496,507,506,57,508,505)
+x<-x-500>0
+x<-factor(x)
+runs.test(x)
+```
+
+通过随机游程检验，得到pvalue=0.116>0.05,从而不拒绝原假设，认为装多装少是随机的
+
+# 5
+
+**运用模拟方法从标准正态分布中每次抽取样本量$n=30$的样本进行Wilcoxon符号秩检验**
+
+## (1)
+
+**分别在显著性水平$\alpha=0.1,0.05,0.01$的条件下，得到经验置信水平即$\alpha$的估计**
+
+```{r}
+n<-30
+nsims<-10000
+mu<-0
+colwil<-rep(0,nsims)
+
+normWil<-function(m){
+  x <- rnorm(n=30) + 0
+  wil <- wilcox.test(x)
+  return (wil$p.value)
+}
+
+powwil<-sapply(colwil, normWil)
+
+powerwil<-sum(powwil<=0.1)/nsims
+print(paste0("alpha = 0.1 :", powerwil))
+
+powerwil<-sum(powwil<=0.05)/nsims
+print(paste0("alpha = 0.05 :", powerwil))
+
+powerwil<-sum(powwil<=0.01)/nsims
+print(paste0("alpha = 0.01 :", powerwil))
+```
+
+## (2)
+
+**将(1)中的标准正态分布变为自由度分别为1、2、3、5、10的t分布，重新做(1)中的分析**
+
+```{r}
+
+colt<-rep(0,nsims)
+
+normT<-function (m, df){
+  x<-rt(n,df)+mu
+  ttest<-t.test(x)
+  return (ttest$p.value)
+}
+
+# 自由度1
+powt<-sapply(colt, normT,df=1)
+
+powert<-sum(powt<=0.1)/nsims
+print(paste0("alpha = 0.1 :", powert))
+
+powert<-sum(powt<=0.05)/nsims
+print(paste0("alpha = 0.05 :", powert))
+
+powert<-sum(powt<=0.01)/nsims
+print(paste0("alpha = 0.01 :", powert))
+
+```
+```{r}
+# 自由度2
+powt<-sapply(colt, normT,df=2)
+
+powert<-sum(powt<=0.1)/nsims
+print(paste0("alpha = 0.1 :", powert))
+
+powert<-sum(powt<=0.05)/nsims
+print(paste0("alpha = 0.05 :", powert))
+
+powert<-sum(powt<=0.01)/nsims
+print(paste0("alpha = 0.01 :", powert))
+```
+```{r}
+# 自由度5
+powt<-sapply(colt, normT,df=5)
+
+powert<-sum(powt<=0.1)/nsims
+print(paste0("alpha = 0.1 :", powert))
+
+powert<-sum(powt<=0.05)/nsims
+print(paste0("alpha = 0.05 :", powert))
+
+powert<-sum(powt<=0.01)/nsims
+print(paste0("alpha = 0.01 :", powert))
+```
+```{r}
+# 自由度10
+powt<-sapply(colt, normT,df=10)
+
+powert<-sum(powt<=0.1)/nsims
+print(paste0("alpha = 0.1 :", powert))
+
+powert<-sum(powt<=0.05)/nsims
+print(paste0("alpha = 0.05 :", powert))
+
+powert<-sum(powt<=0.01)/nsims
+print(paste0("alpha = 0.01 :", powert))
+```
+
+# 6
+
+**两个估计量置信区间长度的平方的期望之比，是度量这两个估计量的效率高低的指标，通过10000次模拟，每次样本量为30，分别在总体服从$N(0,1)$和自由度为2的t分布时，比较Hodges-Lehmann统计量和样本均值的效率（95%置信区间）**
+
+正态分布
+
+```{r}
+library(DescTools)
+
+nsims<-10000
+n<-30
+
+colhl<-rep(0, nsims)
+colmean<-rep(0,nsims)
+
+normHL<-function(v){
+  x<-rnorm(n)
+  hlstat<-unname(HodgesLehmann(x, conf.level = 0.95))
+  return ((hlstat[1]-hlstat[2])^2)
+}
+
+normMean<-function(v){
+  x<-rnorm(n)
+  sample.se<-sd(x)/sqrt(n)
+  alpha<-0.05
+  t.score<-qt(p=alpha/2, df=n-1,lower.tail = F)
+  return ((2*t.score*sample.se)^2)
+}
+
+hl_ci2<-mean(sapply(colhl, normHL))
+mean_ci2<-mean(sapply(colmean, normMean))
+
+hl_ci2/mean_ci2
+
+```
+
+t分布
+
+```{r}
+colhl<-rep(0, nsims)
+colmean<-rep(0,nsims)
+
+normHL<-function(v){
+  x<-rt(n,df=2)
+  hlstat<-unname(HodgesLehmann(x, conf.level = 0.95))
+  return ((hlstat[1]-hlstat[2])^2)
+}
+
+normMean<-function(v){
+  x<-rt(n,df=2)
+  sample.se<-sd(x)/sqrt(n)
+  alpha<-0.05
+  t.score<-qt(p=alpha/2, df=n-1,lower.tail = F)
+  return ((2*t.score*sample.se)^2)
+}
+
+hl_ci2<-mean(sapply(colhl, normHL))
+mean_ci2<-mean(sapply(colmean, normMean))
+
+hl_ci2/mean_ci2
+
+```
+
+
+通过计算发现，不论是在标准正态还是自由度为2的t分布下，HL统计量的效率都比样本均值要高，并且在t分布情况下，HL相比样本均值的效率高的程度比正态情况下大。
+
+# 7
+
+**有一个标准化的变量$X$,其分布可以表示为$X=(1-I_{\varepsilon })Z+c_{\varepsilon }Z)$,$ 0 \leq \varepsilon \leq 1 $, 服从$n=1$且成功率为$\varepsilon$的二项分布，$Z$服从标准正态分布，$c>1$，且$I_{\varepsilon }$和$Z$是相互独立的随机变量。当从$X$的分布中抽样时，有$(1-\varepsilon )100%$的观测是由分布$N(0,1)$生成的，但有比例为$\varepsilon 100%$的观测是分布$N(0,c^2)$生成的，后者观测大多为异常值，我们称$X$服从分布$CN(c,\varepsilon )$。**
+
+## (1)
+
+**使用R中函数rbinom和rnorm，自行编写一个函数。从分布$CN(c,\varepsilon)$中抽取样本量为$n$的随机样本，制作样本直方图和箱线图**
+
+
+```{r}
+n<-1000
+eps<-0.3
+c<-9
+
+i_eps<-rbinom(n,1,eps)
+z_n01<-rnorm(n)
+xx<-(1-i_eps)*z_n01+c*i_eps*z_n01
+hist(xx)
+boxplot(xx)
+```
+
+## (2)
+
+**从分布$N(0,1)$和$CN(16,0.25)$中各抽取样本量为100的样本，分别制作样本直方图和箱线图，比较结果**
+```{r}
+n<-100
+eps<-0.25
+c<-16
+
+i_eps<-rbinom(n,1,eps)
+z_n01<-rnorm(n)
+xx<-(1-i_eps)*z_n01+c*i_eps*z_n01
+hist(z_n01)
+hist(xx)
+```
+```{r}
+boxplot(z_n01)
+boxplot(xx)
+```

@@ -1,0 +1,378 @@
+---
+title: "2019202265-贾耀博-第五周作业"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+# 问题1
+
+## 1.1
+
+**超市经理想了解每位顾客在该超市购买的商品平均件数是否为10件，随机观察了12名顾客，得到如下数据，采用符号检验进行决策**
+
+根据符号检验，假设问题的表述为：
+
+$$H_0: M_e=10 \leftrightarrow H_1: M_e\not= 37$$
+
+```{r}
+items<-c(22,9,4,5,1,16,15,26,47,8,31,7)
+binom.test(sum(items<10), length(items), 0.5)
+```
+
+取$k=6$，则$2\times P(K\leq k|n=12,p=0.5)=2\times \sum\limits_{i=0}^6 (^{12}_i)(\frac{1}{2})^{12}=1$,于是在显著性水平0.05之下，不拒绝原假设，认为这些数据的中心与10不存在显著性差异
+
+## 1.2
+
+### 1.2.1
+
+**(1)请对例2.6的失业率和时间建立线性回归模型，观察一次项的估计结果，解释该结果和例题中$S_1$结果的不同之处**
+
+```{r}
+x<-seq(1,36,by=1)
+y<-c(8.5,7.1,8.2,11.5,7.0,8.2,9.5,7.8,9.2,10.2,9.0,9.4,9.2,8.9,10.5,8.9,7.3,8.8,8.4,6.9,8.0,7.8,6.3,7.5,8.7,7.0,8.4,9.4,8.2,8.6,8.0,7.6,11.1,7.3,5.5,7.0)
+plot(x,y)
+# 线性回归
+lm(y~x)
+
+```
+
+可以看出线性回归模型一次项的系数小雨0，体现出了下降趋势，但是却未通过显著性检验。然而例题中最终得到的结果为有下降趋势，造成这一差异的原因是在回归分析中，我们的每一个样本点都是前年数据和后一年数据组成的样本对，而运用$Cox-Stuart$的趋势存在性检验的方法，所选取的数对之间的间隔要尽量的大，自然形成前后数对。
+
+## 1.2.2
+
+**(2)请根据$S_3$的性质($\mu (S_3|H_0)=N/6;\sigma^2 (S_3|H_0)=N/12$) 将上述数据分为三段，只保留前后两段，用$S_3$进行检验，给出检验结果**
+
+```{r}
+s<-c(8.5,7.1,8.2,11.5,7.0,8.2,9.5,7.8,9.2,10.2,9.0,9.4,9.2,8.9,10.5,8.9,7.3,8.8,8.4,6.9,8.0,7.8,6.3,7.5,8.7,7.0,8.4,9.4,8.2,8.6,8.0,7.6,11.1,7.3,5.5,7.0)
+
+# 取前12和后12
+front<-s[1:12]
+rear<-s[25:36]
+
+# S3权重相等不用考虑权重了
+
+# 计算Z 统计量函数
+zstat <- function(S, n) {  # S是table n是数量 ,用来计算S3的
+    if (n > 30) { # 大样本
+      out <- abs(S - n / 6) / sqrt(n / 12)
+      return(out)
+    } else { # 小样本
+      out <- (abs(S - n / 6) + 0.5) / sqrt(n / 12)
+      return(out)
+    }
+}
+
+
+S3<-table(sign(front-rear))
+S3<-max(S3)
+S3.star<-zstat(S3,36)
+S3.star
+#单尾的检测
+1-pnorm(S3.star)
+
+
+# 调用trend
+library(trend)
+
+# 这个是双尾的检测
+cs.test(s)
+
+```
+
+最终得到$P(S^*_3>0.57735)=0.2818514>\alpha=0.05$,表明该地失业率无显著下降趋势，另外调用trend包的cs.test可以得到同样的结果，注意到cs.test是一个双尾检验,为了得到单尾检验的p值应当将给定输出的p值除以2
+
+## 1.3
+
+**设下表所示为拥有10万人口的某城市15年来每年的车祸死亡率。分别使用$S_1$和$S_2$分析死亡率是否有逐年增加的趋势**
+
+构造假设检验：
+
+$$H_0:近15年来车祸死亡率无增加趋势$$
+
+$$H_1:近15年来车祸死亡率有增加趋势$$
+
+1.使用 S1
+
+```{r}
+rate <- c(17.3,17.9,18.4,18.1,18.3,19.6,18.6,19.2,17.7,20,19,18.8,19.3,20.2,19.9)
+N <- length(rate)
+k<-floor(N/2)
+w<-seq(N-2*1+1,N-2*k+1,-2)
+S<-sum(w*(rate[1:k]-rev(rate[(k+2):N])<0))
+
+#S1的均值方差
+ES<-N^2/8
+DS<-1/24*N*(N^2-1)
+S.star <- (S-ES)/sqrt(DS)
+1-pnorm(S.star)
+```
+
+用$S_1$最终得到$P(S^*_1>0.259)=0.0144<\alpha=0.05$,表明该地车祸死亡率有上升趋势
+
+2. 使用S2
+
+注意到这时 $(s,t)=\{(1,1+c),(2,2+c),\cdots,(N-c,N)\}$,其中
+
+$$c=\begin{cases}N/2 , N是偶数\\ (N+1)/2 , N是奇数\end{cases}$$
+
+从而
+
+$$\mu_{S_2|H_0}=\frac{1}{2}\sum 1 = \begin{cases} N/4 , N是偶数\\ (N-1)/4 , N是奇数 \end{cases}$$
+
+并且
+
+$$\sigma^2_{S_2|H_0}=\frac{1}{4}\sum 1^2 = \begin{cases} N/8 , N是偶数\\ (N-1)/8 , N是奇数 \end{cases}$$
+
+```{r}
+zstat2<-function (S, n){ # 计算S2
+  if (n > 30) { # 大样本
+      out <- abs(S - floor(n/2)/2)/ sqrt(floor(n/2) / 4)
+      return(out)
+    } else { # 小样本
+      out <- (abs(S - floor(n/2)/2)+0.5) / sqrt(floor(n/2) / 4)
+      return(out)
+    }
+}
+# i 和 i+c 一组
+# n是奇数
+c<-ceiling(N/2)
+S<-sum(rate[1:(N-c)]-rate[(1+c):N]<0)
+S
+z<-zstat2(S, N)
+1-pnorm(z)
+```
+
+使用$S_2$，得到pvalue=0.0012<0.05,从而拒绝原假设，表明有上升趋势
+
+## 2.4
+
+**已知一组北京市某年某月某天34个观测站的空气质量指数实地观测数据，表中列出了有关空气质量指数和相关级别。问：如果要判断这一日北京市的整体空气质量，应该设计怎样的假设？**
+
+考虑使用符号检验，假设空气质量指数在
+
+先对数据进行简单统计
+```{r}
+library(readxl)
+dt<-read_xlsx("/Users/jiayaobo/PycharmProjects/nonparams/homework4/AQI.xlsx", sheet=1)
+max(dt$AQI)
+```
+
+得知最大的aqi为138，从而北京空气质量最差也应该能达到三级水平，下面可以采用符号检验的方法，用分位数进行检验，采用3/4分位数，在分别假设北京空气质量在一、二、三等级内分别进行假设检验
+
+第一组假设：
+
+$$H_0 : 北京平均空气质量为一级$$
+
+$$H_1: 北京平均空气质量不是一级$$
+```{r}
+pos<-sum(dt$AQI<=50)
+n<-length(dt$AQI)
+binom.test(pos, n, 0.75)
+```
+
+得到p值为2.2e-16<0.05, 因此拒绝原假设，也就是北京市平均空气质量不是一级
+
+第二组假设检验
+
+
+$$H_0 : 北京平均空气质量为二级$$
+
+$$H_1: 北京平均空气质量不为二级$$
+
+```{r}
+pos<-length(dt$AQI[dt$AQI>50 & dt$AQI<=100])
+binom.test(pos,n,0.75)
+```
+
+p值为0.4286>0.05，因此不拒绝原假设，3/4分位数大于50而小于100，因此可以认为北京市平均空气质量等级为二级
+
+## 2.5 案例与讨论2
+
+**(1)从图2.8来看，这些结果来自于怎么样的模型假设？这些模型在建模的过程中产生的结论有什么问题？**
+
+这些结果来自于线性模型假设
+
+使用线性模型可能会出现，虽然数据存在一种趋势，但是应用线性模型之后，却不能够通过线性模型的假设检验。一方面，当线性模型被否定时，也许有其他模型可以较好的解释这些趋势，另一方面，即使线性模型被接受，也只能说在模型的假设之下，数据的趋势是存在的
+
+**(2)如果由你来分析这些问题，你的分析流程是怎么样的？为什么？**
+
+* 首先运用cox-stuart检验来判断趋势，因为这种判断趋势的方法是不依赖于趋势模型的
+
+* 如果得到了某种趋势再建立回归等模型拟合数据，这样模型的拟合就不是盲目的了，我们在取得一定的根据下再进行回归，更有说服力
+
+* 然后判断模型是否通过假设检验
+
+* 如果不通过假设检验，则尝试别的模型
+
+**(3)请比较$S1,S2$和$S_3$三种方法在该数据的趋势判断上的差异**
+
+**春天 气温和降水**
+
+```{r}
+spring.rain <- read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/springrain.csv")
+spring.temp<-read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/springtemp.csv")
+```
+
+* S1方法
+
+```{r}
+N<-length(spring.rain$y)
+k<-floor(N/2)
+w<-seq(N-2*1+1,N-2*k+1,-2)
+ES<-(N)^2/8
+DS<-1/24*(N)*((N)^2-1)
+S.rain<-sum(w*(spring.rain$y[1:k]-rev(spring.rain$y[(k+2):N])<0))
+S.rain.star<-(S.rain-ES)/sqrt(DS)
+1-pnorm(S.rain.star)
+
+S.temp<-sum(w*(spring.temp$y[1:k]-rev(spring.temp$y[(k+2):N])<0))
+S.temp.star<-(S.temp-ES)/sqrt(DS)
+1-pnorm(S.temp.star)
+```
+
+降雨：p值约为0.61，从而不拒绝原假设，也就是春季降雨无明显变化趋势
+气温：p值约为0.013<0.05，从而拒绝原假设，也就是春季气温有明显升高趋势
+
+* S2 方法
+
+```{r}
+c<-(N+1)/2
+#双边检验
+
+S.rain.sgn <-sum(spring.rain$y[1:22]-spring.rain$y[24:45]>0)
+z<-zstat2(S.rain.sgn, 45)
+1-pnorm(z)
+
+S.temp.sgn <-sum(spring.temp$y[1:22]-spring.temp$y[24:45]>0)
+z<-zstat2(S.temp.sgn, 45)
+1-pnorm(z)
+```
+
+降雨：pvalue=0.33>0.05,因此不拒绝原假设，认为春季降雨量是无明显趋势变化的
+气温：pvalue=0.0165<0.05,因此拒绝原假设，认为春季降雨量是有明显升高趋势变化的
+
+* S3 方法
+
+```{r}
+cs.test(spring.rain$y)$p.value/2
+cs.test(spring.temp$y)$p.value/2
+```
+
+降雨：根据S3方法p值为0.219289>0.05,于是不拒绝原假设，也就是春季降雨无明显变化趋势
+
+气温：根据S3方法p值为0.01<0.05,于是拒绝原假设，也就是春季气温有明显变上升化趋势
+
+**夏天 气温和降水**
+
+```{r}
+summer.rain <- read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/summerrain.csv")
+summer.temp<-read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/summertemp.csv")
+```
+
+* S1方法
+
+```{r}
+N<-length(summer.rain$y)
+k<-floor(N/2)
+w<-seq(N-2*1+1,N-2*k+1,-2)
+
+ES<-(N)^2/8
+DS<-1/24*(N)*((N)^2-1)
+
+S.rain<-sum(w*(summer.rain$y[1:k]-rev(summer.rain$y[(k+2):N])<0))
+S.rain.star<-(S.rain-ES)/sqrt(DS)
+1-pnorm(S.rain.star)
+
+S.temp<-sum(w*(summer.temp$y[1:k]-rev(summer.temp$y[(k+2):N])<0))
+S.temp.star<-(S.temp-ES)/sqrt(DS)
+1-pnorm(S.temp.star)
+```
+
+降雨：p值约为0.814，从而不拒绝原假设，也就是夏季降雨无明显变化趋势
+气温：p值约为0.125，从而不拒绝原假设，也就是夏季气温无明显变化趋势
+
+* S2 方法
+
+```{r}
+c<-(N+1)/2
+S.rain.sgn <-sum(summer.rain$y[1:22]-summer.rain$y[24:45]>0)
+z<-zstat2(S.rain.sgn, 45)
+1-pnorm(z)
+
+S.temp.sgn <-sum(summer.temp$y[1:22]-summer.temp$y[24:45]<0)
+z<-zstat2(S.temp.sgn, 45)
+1-pnorm(z)
+```
+
+降雨：pvalue=0.044<0.05,因此拒绝原假设，认为夏季降雨量是有明显上升趋势的
+气温：pvalue=0.335>0.05,因此不拒绝原假设，认为夏季气温是有明显趋势变化的
+
+* S3 方法
+
+```{r}
+cs.test(summer.rain$y)$p.value/2
+cs.test(summer.temp$y)$p.value/2
+
+```
+
+降雨：pvalue=0.035<0.05，夏季降雨有明显变化趋势
+气温：pvalue=0.098<0.05，夏季气温无明显变化趋势
+
+**冬季 降雨和气温**
+
+```{r}
+winter.rain <- read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/winterrain.csv")
+winter.temp<-read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework4/wintertemp.csv")
+```
+
+* S1方法
+
+```{r}
+N<-length(winter.rain$y)
+k<-floor(N/2)
+w<-seq(N-2*1+1,N-2*k+1,-2)
+ES<-(N-1)^2/8
+DS<-1/24*(N)*((N-1)^2-1)
+S.rain<-sum(w*(winter.rain$y[1:k]-rev(winter.rain$y[(k+2):N])<0))
+S.rain.star<-(S.rain-ES)/sqrt(DS)
+1-pnorm(S.rain.star)
+
+S.temp<-sum(w*(winter.temp$y[1:k]-rev(winter.temp$y[(k+2):N])<0))
+S.temp.star<-(S.temp-ES)/sqrt(DS)
+1-pnorm(S.temp.star)
+```
+
+降雨：p值约为0.421，从而不拒绝原假设，也就是冬季降雨无明显变化趋势
+气温：p值约为0.01，从而拒绝原假设，也就是冬季气温有明显升高趋势
+
+* S2 方法
+
+```{r}
+c<-(N+1)/2
+S.rain.sgn <-sum(winter.rain$y[1:22]-winter.rain$y[24:45]>0)
+z<-zstat2(S.rain.sgn, 45)
+1-pnorm(z)
+
+S.temp.sgn <-sum(winter.temp$y[1:22]-winter.temp$y[24:45]<0)
+z<-zstat2(S.temp.sgn, 45)
+1-pnorm(z)
+```
+
+降雨：pvalue=0.5>0.05,因此不拒绝原假设，认为冬季降雨量无明显趋势变化
+气温：pvalue=0.005<0.05,因此拒绝原假设，认为冬季气温是有明显上升趋势的
+
+* S3 方法
+
+```{r}
+cs.test(winter.rain$y)$p.value/2
+cs.test(winter.temp$y)$p.value/2
+
+```
+
+降雨：pvalue=0.219>0.05,冬季降雨无明显变化趋势
+气温：pvalue=0.01<0.05,冬季气温有明显升高趋势
+

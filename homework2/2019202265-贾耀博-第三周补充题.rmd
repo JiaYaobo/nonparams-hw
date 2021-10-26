@@ -1,0 +1,168 @@
+---
+title: "2019202265-贾耀博-第三周补充题"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 问题 2
+
+## $(d^*)$
+
+**在(c)的基础上比较两种做法置信区间的差异，在哪些位置两者估计的精度比较接近，哪些位置相差较远。如果在(c)的做法上做如下改良：现将原始数据划分为两个集合，用标签$S_1,S_2$，表示$S_1$中所有数据点都小于20%的分位数点，S_2中所有点不满足$S_1$中点的条件。每次选出的10个样本点中，先判断有没有数据的标签是$S_2$,如果有则执行$(c)$的操作，没有则去掉这次抽样的结果，补充抽样一次。请比较两种结果在置信区间的表达上是否有差异，在哪些位置的估计上有差异，结合(a)进行分析**
+
+先重新绘制一下(b)中的经验分布和置信区间，以及(c)中的经验分布和置信区间
+
+```{r}
+# 这里使用plot，lines 方便循环绘画
+
+wage<-read.table("/Users/jiayaobo/PycharmProjects/nonparams/homework2/wage_s.csv")
+
+# 先转成矩阵再转成向量
+wage<-as.matrix(wage)
+wage <-as.vector(t(wage))
+
+#计算经验分布
+wage<-na.omit(wage)
+wage.sort<-sort(wage)
+wage.rank<-rank(wage.sort)
+wage.cdf<-wage.rank/length(wage)
+
+# 给定alpha
+alpha <- 0.05
+# 置信区间带
+N<-length(wage)
+band <- sqrt((1/(2*N))*log(2/alpha))
+
+lower.95<-wage.cdf-band
+upper.95<-wage.cdf+band
+
+plot(wage.sort , wage.cdf,xlab = "wage",ylab = "cdf")
+segments(wage.sort[1:N-1],wage.cdf[1:N-1], wage.sort[2:N],wage.cdf[1:N-1])
+
+
+lines(wage.sort,lower.95,lty=2)
+lines(wage.sort, upper.95, lty=2)
+
+# 这里只用c的方法画五条，不然太乱了，并且先只画出置信区间上界
+for (i in 1:5) {
+ y<-sample(wage,10,replace=T) #有放回抽样
+ y.sort<-sort(y)
+ y.rank<-rank(y.sort)
+ y.cdf<-y.rank/length(y)
+  y.upper <- y.cdf+band
+  y.lower <- y.cdf-band
+ lines(y.sort,y.upper,lty=1,col=i)
+}
+
+
+```
+
+可以看出(c)于(b) 比较置信区间上限，可以发现当wage较小的时候，大约在wage在(75,125)之间时于(b)中的方法差异较大，在大于125之后，在(125,175)之间差异相对较小，而大于175后差异又变大
+
+下面进行下限比较
+
+```{r}
+# 观察下限比较
+par(new=T)
+plot(wage.sort , wage.cdf,xlab = "wage",ylab = "cdf")
+segments(wage.sort[1:N-1],wage.cdf[1:N-1], wage.sort[2:N],wage.cdf[1:N-1])
+
+
+lines(wage.sort,lower.95,lty=2)
+lines(wage.sort, upper.95, lty=2)
+
+for (i in 1:5) {
+ y<-sample(wage,10,replace=T) #有放回抽样
+ y.sort<-sort(y)
+ y.rank<-rank(y.sort)
+ y.cdf<-y.rank/length(y)
+  y.upper <- y.cdf+band
+  y.lower <- y.cdf-band
+ lines(y.sort,y.lower,lty=1,col=i)
+}
+```
+
+下限在wage较小处于(50-125)区间时差异较小，wage大于125时差异较大，下面对(c)方法进行改良
+
+```{r}
+# 20% 重复多次抽样都没有一次全都是前20%的，提升到50%代替一下
+
+per_20<-unname(quantile(wage,0.5))
+
+upper_diff<-c()
+lower_diff<-c()
+
+
+par(new=T)
+
+plot(wage.sort , wage.cdf,xlab = "wage",ylab = "cdf")
+segments(wage.sort[1:N-1],wage.cdf[1:N-1], wage.sort[2:N],wage.cdf[1:N-1])
+
+
+lines(wage.sort,lower.95,lty=2, col="black")
+lines(wage.sort, upper.95, lty=2, col="black")
+
+for (i in 1:1000) {
+  y<-sample(wage,10,replace=T) #有放回抽样
+  y.sort<-sort(y)
+  y.rank<-rank(y.sort)
+  y.cdf<-y.rank/length(y)
+  y.upper <- y.cdf+band
+  y.lower <- y.cdf-band
+
+  # 改进后的样本
+  y_mod <- y
+  flag<-0
+
+  # 不满足要求重新抽样
+  while(sum(y_mod<per_20)==10){
+    y_mod<-sample(wage,10,replace = T)
+    flag<-1
+  }
+
+  y_mod.sort <- sort(y_mod)
+  # y_mod.rank < -rank (y_mod.sort)
+  y_mod.cdf <- c(1,2,3,4,5,6,7,8,9,10)/length(y)
+  y_mod.upper <- y_mod.cdf+band
+  y_mod.lower <- y_mod.cdf-band
+
+  if(flag){
+      lines(y_mod.sort, y_mod.upper, col="red")
+      lines(y_mod.sort, y_mod.lower, col="red")
+      lines(y.sort,y.upper, col="blue")
+      lines(y.sort,y.lower, col = "blue")
+      legend(350,0.5,legend=c("origin","modified", "unmodified"),col=c("black","red","blue"),lty=1:2, cex=0.8)
+      par(new=T)
+  }
+}
+```
+
+可以看出改进后的置信区间比原置信区间在wage较大的位置差异较大，数值上更低，并且相对更接近于总体经验分布的置信区间，
+
+根据(a)进行分析，由于根据经验分布函数的定义
+
+$$\hat{F}_n\left( x \right) =\frac{1}{n}\sum_{i=1}^n{I\left( X_i<x \right)}$$
+
+随机变量X满足
+
+$$
+X=\begin{cases}
+	x_1\,\,\quad p=\frac{1}{n}\\
+	x_2\,\,\quad p=\frac{1}{n}\\
+	...\\
+	x_n\,\,\quad p=\frac{1}{n}\\
+\end{cases}
+$$
+
+而对于改进后的方法，由于认为干涉了抽样的分布，从而$X$取诸$x_i$的值就不是等可能的，从而改变了经验分布，进而影响了置信区间，在本例中人为降低了抽取到较靠前的随机变量的取值，从而使得随机变量$X$的取值在较大的地方的概率增加，进而导致随机变量$I(X_i<x)$取值为1的概率降低，进而在wage较大的时候降低了cdf
+
+
+

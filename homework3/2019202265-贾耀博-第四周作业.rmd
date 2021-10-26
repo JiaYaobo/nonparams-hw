@@ -1,0 +1,312 @@
+---
+title: "2019202265-贾耀博-第四周作业"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+# 问题1
+
+## 1.1
+
+**设 $X_1,X_2,\cdots,X_n$ 为具有连续分布函数 $F(x)$ 的iid样本，且具有概率密度函数 $f(x)$，如定义 $U_i=\frac{F(X_{(i)})}{F(X_{(i+1)})}$，$i=1,2,\cdots,n-1$ ，$U_n=F(X_{(n)})$ ，证明 $U_1,U^2_2,\cdots,U_n^n$ 是来自（0，1）均匀分布上的iid样本**
+
+证明：
+
+设 $Y_i=F(X_{(i)})$，那么由于 $U_i=\frac{F(X_{(i)})}{F(X_{(i+1)})}$，$i=1,2,\cdots,n-1$ ，$U_n=F(X_{(n)})$， 从而
+
+$U_i = \frac{Y_i}{Y_{i+1}}$，$i=1,2,\cdots,n-1$，$U_n = Y_n$，所以
+
+$$\begin{cases} Y_1=U_1U_2\cdots U_n \\ Y_2=U_2U_3\cdots U_n \\ \vdots\\ Y_n=U_n	\end{cases}$$
+
+另一方面，$X_{(i)}$ 的密度函数为 $f_{i}(x)=\frac{n!}{(n-i)!(i-1)!}F^{i-1}(x)f(x)[1-F(x)]^{n-i}$，由于 $|\frac{dF^{-1}(Y_i)}{dY_i}|=\frac{1}{f(X_{(i)})}=\frac{1}{f(F^{-1}(Y_i))}$，进而可以得到 $Y_i$ 的概率密度函数
+
+$$f_{y_i}(y)=\frac{n!}{(n-i)!(i-1)!}y^{i-1}_i(1-y_i)^{n-i}$$
+
+而上述$Y_i$的概率密度表明其为第i个服从(0,1)上均匀分布的顺序统计量，从而可以得到 $Y_1, Y_2,\cdots,Y_n$ 的联合密度如下
+
+$$g(y_1,y_2,\cdots,y_n)=n!$$
+
+考虑$Y_i$到$U_i$变换的雅可比行列式
+
+$$\begin{vmatrix}U_2\cdots U_n & U_1U_3\cdots U_n & \cdots & U_1\cdots U_{n-1} \\ 0 & U_3\cdots U_n & \cdots & U_2\cdots U_{n-1} \\ \vdots & \ddots & \cdots & \vdots \\ 0 & \cdots & \cdots & 1 \end{vmatrix}=U_2U^2_3\cdots U^{n-1}_n$$
+
+可以得到$U_1，U_2,\cdots U_n$的联合密度函数 $h(U_1, U_2,\cdots,U_n)=n!U_2U^2_3\cdots U^{n-1}_n$
+
+从而易得 $U_1,U^2_2,\cdots,U_n^n$ 的联合密度为 $m(U_1, U^2_2,\cdots,U^n_n)=1$， 这表明 $U_1,U^2_2,\cdots,U_n^n$ 是来自（0，1）均匀分布上的iid样本，从而命题得证
+
+## 1.2
+
+**设随机变量 $Z_1,Z_2,\cdots Z_N$ 相互独立同分布，分布连续，其对应的秩向量 $R=(R_1,R_2,\cdots,R_N)$ ，假定 $N\geq 2$，令$V=R_1-R_N$,试证明：$P(V=k)=\begin{cases}\frac{N-|k|}{N(N-1)},|k|=1,2,\cdots,N-1\\ 0, other\end{cases}$**
+
+证明：
+
+由对称性，不妨假设$R_1>R_N$,
+
+$$P(V=k) = P(R_1-R_N=k)=P(R_1=N, R_N=N-k)+\cdots+P(R_1=k+1, R_N=1)$$
+
+而对$P(R_1=N-i+k, R_N=N-i)，i=k,k+1,\cdots,N-1$, 实际上就是固定了 $R_1, R_N$ 的位次后再对其他变量做全排列，因此概率值最后均为$\frac{(n-2)!}{n!}$, 共计$N-k$个，从而得到
+
+$P(V=k)=\begin{cases}\frac{N-|k|}{N(N-1)},|k|=1,2,\cdots,N-1\\ 0, other\end{cases}$, 于是命题得证
+
+## 1.3
+
+**设 ${X_1,X_2,\cdots,X_n}$ 为独立同分布的样本，服从$F(x)$，记最小的次序统计量$X_{(1)}$的分布函数为$F_{(1)}(x)$,求最小次序统计量的分布。用geyser数据的duration变量，每次不放回的抽取20个数据，计算最小值，共重复50次，得到最小值的观测样本50个，由50个数据计算次序统计量的经验分布函数，问：这个经验分布函数和理论分布函数相比差距多大？理论分布为正态分布，请使用抽样得到的50个样本数据通过矩估计的方法估计其期望和方差，请用图示法说明你的观察结果**
+
+
+顺序统计量$X_{(i)}$的密度函数为 $f_{i}(x)=\frac{n!}{(n-i)!(i-1)!}F^{i-1}(x)f(x)[1-F(x)]^{n-i}$， 从而可以得到$X_{(1)}$的密度函数为
+
+$$f_{i}(x)=nf(x)[1-F(x)]^{n-1}$$
+
+```{r}
+dt_geyser<-read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework3/geyser.csv")
+
+library(tidyverse)
+library(dplyr)
+
+#  存取每次最小值
+mins<-c()
+
+# 抽样
+for (i in 1:50){
+  samp <- sample(dt_geyser$duration, size = 20)
+  # 取最小值
+  m <- min(samp)
+  mins<-c(mins,m)
+}
+
+# 矩估计
+mu<-mean(mins)
+sgm<-sd(mins)
+
+# 经验分布函数
+
+duration_sort <- sort(mins)
+duration_rank <- rank(duration_sort)
+
+duration_cdf <- duration_rank/length(duration_sort)
+duration_actual <- pnorm(duration_sort, mean=mu, sd=sgm)
+
+dt_duration <- data.frame(sample = duration_cdf, actual=duration_actual)
+
+dt_duration %>% ggplot(aes(x=duration_sort))+
+        geom_line(aes(y=duration_cdf, color="Empirical Distribution"))+
+        geom_line(aes(y=duration_actual, color="Normal Distribution"))+
+        labs(color="")+
+        xlab("x")+
+        ylab("Prob.")+
+        theme_bw()
+
+```
+
+从图示中可以看出在x逐渐增大的过程中，正态分布与经验分布相差越来越大，并且正态分布大于经验分布，而后差距逐渐减小， 经验分布大于正态分布
+
+## 1.4
+
+**设 ${X_1,X_2,\cdots,X_n}$ 为独立同分布的样本，服从连续分布 $F(x)$。证明：$h(X_1,X_2,X_3)=sgn(2X_1-X_2-X_3)$ 是概率$\theta (F) = P(X_1 \gt \frac{X_2+X_3}{2})-P(X_1\lt \frac{X_2+X_3}{2})$ 的无偏估计 （1）证明： $F(x)$是对称的，那么$\theta (F)=0$ (2) 从$N(0,1)$中选取随机数$a$，经$x=exp(a)$ 变换为一个新的变量$x$,请计算由$x$形成的$\theta (F)$的$U$统计量观测值，根据U统计量观测值，用图示法观察$X$的分布是不对称的**
+
+证明：
+
+$$E(h(X_1,X_2,X_3))=P(X_1 \gt \frac{X_2+X_3}{2})\times 1 + P(X_1\lt \frac{X_2+X_3}{2})\times -1 = P(X_1 \gt \frac{X_2+X_3}{2})-P(X_1\lt \frac{X_2+X_3}{2}) = \theta (F)$$
+
+从而$h(X_1,X_2,X_3)=sgn(2X_1-X_2-X_3)$ 是概率$\theta (F) = P(X_1 \gt \frac{X_2+X_3}{2})-P(X_1\lt \frac{X_2+X_3}{2})$ 的无偏估计
+
+(1)
+
+证明：
+
+$F(x)$ 是对称的，那么就应该有$h(X_1,X_2,X_3)=(X_2,X_1,X_3)=(X_3,X_2,X_1)$, 也就是 $sgn(2X_1-X_2-X_3)=sgn(2X_2-X_1-X_3)=sgn(2X_3-X_2-X_1)$， 如果$sgn(2X_1-X_2-X_3)=1$,也就是$X_1 \gt \frac{X_2+X_3}{2}$,那么$sgn(2X_2-X_1-X_3)=sgn(2X_3-X_2-X_1)=1$,从而
+
+$$\begin{cases}2X_2>X_1+X_3> \frac{1}{2} X_2+\frac{3}{2}X_3 \\ 2X_3>X_2+X_1> \frac{1}{2} X_3+\frac{3}{2}X_2\end{cases}$$
+
+最终得到$\begin{cases}X_2>X_3 \\ X_3>X_2\end{cases}$， 然而这是不可能的，同理$sgn(2X_1-X_2-X_3)=-1$也不可能，于是$X_1 = \frac{X_2+X_3}{2}$， 从而$\theta (F)=0$
+
+(2)
+
+根据U统计量定义
+
+$$h^*(X_1,X_2,X_3)=\frac{1}{3}(sgn(2X_1-X_2-X_3)+sgn(2X_2-X_1-X_3)+sgn(2X_3-X_2-X_1))$$
+
+$$U(X_1,X_2,X_3)=\frac{1}{3}(sgn(2X_1-X_2-X_3)+sgn(2X_2-X_1-X_3)+sgn(2X_3-X_2-X_1))$$
+
+
+```{r}
+# U统计量
+U<-function (x){
+  res<- (sign(2*x[1]-x[2]-x[3])+sign(2*x[2]-x[1]-x[3])+sign(2*x[3]-x[2]-x[1]))/3
+  return (res)
+}
+
+#抽样并变换
+u<-c()
+for (i in 1:500){ # 重复500次
+  xx<-exp(rnorm(3))
+  res<-U(xx)
+  u<-c(u,res)
+}
+
+```
+
+下面对重复500次的U统计量打印
+
+```{r}
+plot(u)
+```
+
+可以看出U统计量要么为$1 \over 3$要么为$-1 \over 3$, U统计量的绝对值为$1 \over 3$，而如果分布是对称的，则U统计量的绝对值应当尽量的小，因此如果在0.01的水平上比较，那么X的分布不是对称的
+
+# 问题2
+
+## 2.1
+
+**给出密度函数和分布函数**
+
+根据二元次序统计量的联合密度可以推出三维次序统计量的密度函数为
+
+$$f_{r,s,t}(x,y,z)=\frac{n!}{(r-1)!(s-r-1)!(t-s-1)!(n-t)!}F^{r-1}(x)f(x)[F(y)-F(x)]^{r-s-1}f(y)[F(z)-F(y)]^{t-s-1}f(z)[1-F(z)]^{n-t}$$
+
+从而分布函数为
+
+$$F_{r,s,t}(X,Y,Z)=\int^Z _Y \int^Y_X\int^X _0  \frac{n!}{(r-1)!(s-r-1)!(t-s-1)!(n-t)!}F^{r-1}(x)f(x)[F(y)-F(x)]^{r-s-1}f(y)[F(z)-F(y)]^{t-s-1}f(z)[1-F(z)]^{n-t}dxdydz$$
+
+## 2.2
+
+**当F为指数分布时，请给出三个次序统计量的联合分布表达式**
+
+将$F(x)=1-e^{-\lambda x}$代入上面的联合分布中可以得到三个次序统计量的联合分布表达式
+
+$$F_{r,s,t}(X,Y,Z)=\int^Z _Y \int^Y_X\int^X _0  \frac{n!\lambda^3}{(r-1)!(s-r-1)!(t-s-1)!(n-t)!}(1-e^{-\lambda x})^{r-1}(e^{-\lambda x}-e^{-\lambda y})^{r-s-1}(e^{-\lambda y}-e^{-\lambda z})^{t-s-1}e^{-\lambda[(n-t+1)z+y+x]}dxdydz$$
+
+## 2.3
+
+**在例1.3中，请对控制组每次不放回抽样抽取8只豚鼠，找到寿命最短的小鼠作为$(X_{(1)},X_{(2)},X_{(3)})$的观测值，这样的实验做20次，分别产生20组$(X_{(1)},X_{(2)},X_{(3)})$的观测样本，计算 $\zeta_c=X_1+X_3-2X_2$ 的符号，再对感染剂量最大的组重复做类似的实验产生$\zeta_5$，请比较$\zeta_5$和$\zeta_c$的符号数量上是否有明显的差别。**
+
+```{r}
+dt_gpig_ctrl <- read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework3/gpigscontrol.csv", header = FALSE)
+dt_gpig5<-read.csv("/Users/jiayaobo/PycharmProjects/nonparams/homework3/gpigs5.csv", header = FALSE)
+
+Zeta<-function(x){
+  res <- sign(x[1]+x[3]-2*x[2])
+  return (res)
+}
+
+gpig_ctrl_sgn<-c()
+gpig5_sgn<-c()
+
+for ( i in 1:20){
+  s1<-sort(sample(dt_gpig_ctrl$V1,8))
+  s2<- sort(sample(dt_gpig5$V1,8))
+  res1 <- Zeta(s1)
+  res2 <-Zeta(s2)
+  gpig_ctrl_sgn<-c(gpig_ctrl_sgn,res1)
+  gpig5_sgn<-c(gpig5_sgn,res2)
+}
+
+sum(gpig5_sgn==1)
+sum(gpig5_sgn==0)
+sum(gpig5_sgn==-1)
+
+```
+```{r}
+# 控制组
+
+sum(gpig_ctrl_sgn==1)
+sum(gpig_ctrl_sgn==0)
+sum(gpig_ctrl_sgn==-1)
+```
+```{r}
+# 第五组
+
+sum(gpig5_sgn==1)
+sum(gpig5_sgn==0)
+sum(gpig5_sgn==-1)
+```
+
+观察可以看出两组统计量的符号量差距不大，在正号和负号上各相差一个
+
+## 2.4
+
+**如果控制组的豚鼠寿命和剂量最多的组的豚鼠寿命都服从指数分布，请先用矩估计给出指数分布估计，再代入三顺序统计量分布，由此得到$\zeta_c$和$\zeta_5$的分布密度，再由分布密度判断(2)中的结论，请比较和实际数据产生的结论一致吗？**
+
+```{r}
+# 计算均值用来矩估计
+
+mu_ctrl<-1/mean(dt_gpig_ctrl$V1)
+mu_5<-1/mean(dt_gpig5$V1)
+```
+
+第一、二、三个次序统计量的联合密度函数为
+
+$$f_{1,2,3}(x,y,z)=\frac{8!\lambda^3}{5!}e^{-\lambda（6z+y+x）}$$
+
+为了得到$\zeta = x+z-2y$的分布，可以先作变换
+
+$$\begin{cases}X_{(1)} = U \\ X_{(2)}= S \\ X_{(3)} = T+2S-U \end{cases}$$
+
+这样就有
+
+$$\begin{cases}U=X_{(1)} \\ S = X_{(2)}\\ T = X_{(1)}+X_{(3)}-2X_{(2)} \end{cases}$$
+
+该变换的雅可比行列式为
+
+$$\begin{vmatrix}1 & 0 & 0 \\ 0 & 1 & 0 \\ -1 & 2 & 1\end{vmatrix}=1$$
+
+从而可以得到 $(U,S,T)$的联合密度函数
+
+$$g(u,s,t)=\frac{8!\lambda^3}{5!}e^{-\lambda(6t+12s-6u+u+s)}=\frac{8!\lambda^3}{5!}e^{-\lambda(-5u+6t+13s)}$,其中 $s>u\gt 0$$
+
+目标是为了得到$T$的密度函数，那么需要求出联合密度函数的关于$T$的边际密度，从而可以得到边际密度函数
+
+$$\begin{align}h(t) & =\int_0^\infty \int_0^s \frac{8!\lambda^3}{5!}e^{-\lambda(-5u+6t+13s)} dsdu \\&=\frac{8!\lambda^3}{5!}e^{-6\lambda t} \int_0^\infty e^{-13\lambda s}(\int_0^s e^{5\lambda u}du)ds \\ &=\frac{8!\lambda^3}{5!} e^{-6\lambda t}\int_0^\infty \frac{1}{5\lambda}(e^{-13\lambda s}-e^{-8\lambda s})ds \\ & = \frac{42}{13}\lambda e^{-6\lambda t}\end{align}$$
+
+通过均值估计指数分布参数$\lambda$,最终得到$\lambda_c = 0.003$, $\lambda_5 = 0.010 $ （保留三位小数），代入到其联合分布当中，分别得到两组的$\zeta_c,\zeta_5$密度函数为
+
+控制组：
+
+$$h_c(t) = 0.001e^{-0.018t}$$ （保留三位小数,下同）
+
+最高组：
+
+$$h_5(t)=0.032e^{-0.06t}$$
+
+```{r}
+# 控制组密度函数
+hc<-function(x){
+  return (0.001*exp(-0.018*x))
+}
+
+# 最高组密度函数
+
+h5<-function (x){
+  return (0.032*exp(-0.06*x))
+}
+
+xseq <- seq(-25,25,by=0.1)
+hc_seq <- hc(xseq)
+h5_seq <-h5(xseq)
+
+dt_c5<-data.frame(x=xseq, hc=hc_seq, h5=h5_seq)
+
+dt_c5 %>% ggplot(aes(x=x))+
+        geom_line(aes(y=hc_seq, color="Control"))+
+        geom_line(aes(y=h5_seq, color="Group 5"))
+
+```
+
+
+从图片中可以看出二者分布相差很大，从而与之前的结论相反。
+
+
+
+
+
+
+
+
+
+
+
+
