@@ -1,0 +1,555 @@
+---
+title: "2019202265-贾耀博-第七八周作业"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 问题1
+
+## 1.1
+
+**试给出p分位数的Bootstrap置信区间求解程序，并对例1.2的数据汇总求解0.75和0.25分位数的置信区间**
+
+```{r}
+# 读入数据
+nerve<-read.table("/Users/jiayaobo/PycharmProjects/nonparams/homework6/nerve.txt", fill = TRUE)
+nerve<-as.matrix(nerve)
+nerve<-as.vector(nerve)
+nerve<-na.omit(nerve)
+```
+```{r}
+# 求解p分位数的Bootstrap
+n<-20
+B<-1000
+nerve.25 <- quantile(nerve, 0.25)
+nerve.75 <- quantile(nerve, 0.75)
+SD.nerve.25<-NULL
+SD.nerve.75<-NULL
+TBoot.25<-NULL
+TBoot.75<-NULL
+for (i in 1:B){
+  Xsample <- sample(nerve, n, T)
+  Tboot.25<-quantile(Xsample, 0.25)
+  Tboot.75<-quantile(Xsample, 0.75)
+  TBoot.25<-c(TBoot.25, Tboot.25)
+  TBoot.75<-c(TBoot.75, Tboot.75)
+  SD.nerve.25<-c(SD.nerve.25, sd(TBoot.25))
+  SD.nerve.75<-c(SD.nerve.75, sd(TBoot.75))
+}
+
+Sd.25<-sd(TBoot.25)
+Sd.75<-sd(TBoot.75)
+
+```
+```{r}
+alpha<-0.05
+z<-abs(qnorm(alpha/2))
+
+#使用正态近似求解置信区间
+ci.25.lower<-nerve.25-z*Sd.25
+ci.25.upper<-nerve.25+z*Sd.25
+
+ci.75.lower<-nerve.75-z*Sd.75
+ci.75.upper<-nerve.75+z*Sd.75
+
+print(paste0("0.95 CI of 0.25 percentile: ", "[",ci.25.lower," ,",ci.25.upper,"]" ))
+print(paste0("0.95 CI of 0.75 percentile: ", "[",ci.75.lower," ,",ci.75.upper,"]" ))
+
+```
+
+## 1.2
+
+**以下给出的是申请进入法学院学习的学生LSAT测试成绩和GPA成绩**
+
+(1) 计算$Y_i$和$Z_i$的相关系数
+
+```{r}
+lsat<-c(576,635,558,578,666,580,555,661,651,605,653,575,545,572,594)
+gpa<-c(3.39,3.30,2.81,3.03,3.44,3.07,3.00,3.43,3.36,3.13,3.12,2.74,2.76,2.88,3.96)
+
+
+print(paste0("Coefficient of lsat and gpq is：",cor(lsat, gpa)))
+```
+
+(2) 使用Bootstrap方法估计相关系数的标准误差
+
+```{r}
+dt<-data.frame(lsat=lsat, gpa=gpa)
+n<-8
+B<-1000
+TBoot.cor<-NULL
+SD.cor<-NULL
+for(i in 1:B){
+  Xsample<-sample(dt, n, T)
+  Tboot.cor<-cor(Xsample)
+  TBoot.cor<-c(TBoot.cor, Tboot.cor)
+  SD.cor<-c(SD.cor, sd(TBoot.cor))
+}
+print(paste0("Bootstrap SD. is: ",sd(TBoot.cor)))
+```
+
+(3) 计算置信度为0.95的相关系数Bootstrap枢轴量置信区间
+```{r}
+dt_cor<-cor(lsat, gpa)
+Lc1<-2*dt_cor-quantile(TBoot.cor, 0.975)
+Uc1<-2*dt_cor-quantile(TBoot.cor, 0.025)
+print(paste0("CI of Correlative ratio: ", "[",Lc1," ,",Uc1,"]" ))
+```
+
+## 1.3
+
+**构造一个模拟比较4个bootstrap置信区间的方法，$n=50$，$T(F)=\int (x-\mu)^3dF(x)/\sigma^3$是偏度。从分布$N(0,1)$中抽取出样本$Y_1,Y_2,\cdots,Y_n$,令$X_i=e^{Y_i},i=1,2,\cdots,n$。根据样本$X_1,X_2,\cdots,X_n$构造$T(F)$的4种类型的置信度为0.95的Bootstrap置信区间。多次重复上述步骤，估计4种区间的真实覆盖率**
+
+```{r}
+library(psych)
+
+# 抽取样本
+Y<-rnorm(1000, 0,1)
+X<-exp(Y)
+
+# 真实偏度
+true.skew<-(exp(1)+2)*sqrt(exp(1)-1)
+```
+```{r}
+n<-50
+B<-1000
+
+# 样本偏度
+F.skew<-skew(X)
+
+TBoot.skew<-NULL
+
+for (i in 1:B){
+  Xsample<-sample(X, n, T)
+  Tboot.skew<-skew(Xsample)
+  TBoot.skew<-c(TBoot.skew, Tboot.skew)
+}
+Sd.skew<-sd(TBoot.skew)
+```
+```{r}
+alpha<-0.05
+
+# 顺序统计量置信区间
+loc<-NULL
+l<-length(X)
+conf <- pbinom(l,l,0.5)-pbinom(0,l,0.5)
+for (k in 1:l){
+  conf<- pbinom(l-k,l,0.5)-pbinom(k,l,0.5)
+  if(conf<1-alpha){
+    loc<-k-1
+    break
+  }
+}
+
+Lc1 <- sort(X)[loc]
+Uc1<-sort(X)[l-k+1]
+ORDER.interval <- c(Lc1, Uc1)
+print(paste0("ORDER CI : ", "[",Lc1," ,",Uc1,"]" ))
+
+# 正态置信区间
+
+Lc1<-F.skew+qnorm(alpha/2)*Sd.skew
+Uc1<-F.skew-qnorm(alpha/2)*Sd.skew
+NORM.interval <- c(Lc1, Uc1)
+print(paste0("Norm CI : ", "[",Lc1," ,",Uc1,"]" ))
+
+# 枢轴量置信区间
+Lc1<-2*F.skew-quantile(TBoot.skew,0.975)
+Uc1<-2*F.skew-quantile(TBoot.skew,0.025)
+PIVOT.interval <- c(Lc1, Uc1)
+print(paste0("Pivot CI : ", "[",Lc1," ,",Uc1,"]" ))
+
+# 分位数置信区间
+
+Lc1<-2*F.skew-quantile(TBoot.skew,0.025)
+Uc1<-2*F.skew+quantile(TBoot.skew,0.975)
+QUANTILE.interval <- c(Lc1, Uc1)
+print(paste0("Quantile CI : ", "[",Lc1," ,",Uc1,"]" ))
+
+```
+
+```{r}
+# 上述过程重复1000次,适当减小B
+B<-100
+N<-1000
+norm_bootstrap <- 0
+pivot_bootstrap <- 0
+quantile_bootstrap <- 0
+order_bootstrap <- 0
+for (i in 1:N){
+  Y<-rnorm(1000, 0,1)
+  X<-exp(Y)
+  F.skew<-skew(X)
+  TBoot.skew<-NULL
+  for (j in 1:B){
+    Xsample<-sample(X,n,T)
+    Tboot.skew<-skew(Xsample)
+    TBoot.skew<-c(TBoot.skew, Tboot.skew)
+  }
+  Sd.skew<-sd(TBoot.skew)
+  # 正态
+  Lc1<-F.skew+qnorm(0.025)*Sd.skew
+  Uc1<-F.skew-qnorm(0.025)*Sd.skew
+  if(true.skew>Lc1 && true.skew<Uc1){
+    norm_bootstrap <- norm_bootstrap+1
+  }
+  # 枢轴量
+  Lc1<-2*F.skew-quantile(TBoot.skew,0.975)
+  Uc1<-2*F.skew-quantile(TBoot.skew,0.025)
+  if(true.skew>Lc1 && true.skew<Uc1){
+    pivot_bootstrap <- pivot_bootstrap+1
+  }
+
+  #分位数
+  Lc1<-2*F.skew-quantile(TBoot.skew,0.025)
+  Uc1<-2*F.skew+quantile(TBoot.skew,0.975)
+  if(true.skew>Lc1 && true.skew<Uc1){
+    quantile_bootstrap<-quantile_bootstrap+1
+  }
+
+  # 顺序统计量
+  loc<-NULL
+  l<-length(TBoot.skew)
+  conf <- pbinom(l,l,0.5)-pbinom(0,l,0.5)
+  for (k in 1:l){
+    conf<- pbinom(l-k,l,0.5)-pbinom(k,l,0.5)
+    if(conf<1-alpha){
+      loc<-k-1
+      break
+    }
+  }
+  Lc1 <- sort(TBoot.skew)[loc]
+  Uc1<-sort(TBoot.skew)[l-k+1]
+  if(true.skew>Lc1 && true.skew<Uc1){
+    order_bootstrap<-order_bootstrap+1
+  }
+}
+
+print(paste0("Norm CI overlapping rate: ", norm_bootstrap/N))
+print(paste0("Pivot CI overlapping rate: ", pivot_bootstrap/N))
+print(paste0("Quantile CI overlapping rate: ", quantile_bootstrap/N))
+print(paste0("Order CI overlapping rate: ", order_bootstrap/N))
+```
+
+重复上述过程1000次后，发现置信区间覆盖真值率枢轴量法最高为55.9%，其次是正态方法为49%，之后是分位数法为24.4%,而顺序统计量覆盖率为0
+
+## 1.4
+
+**令$X_1,X_2,\cdots,X_n \sim N(\mu ,1)$.估计$\hat{\theta} = e^{\bar{X}}$ 是参数 $\theta=e^{\mu}$ 的MLE。用 $\mu=5$ 生成100个观测数据集**
+
+(1) 用枢轴量方法获得$\theta$的0.95置信区间和标准差。用参数Bootstrap方法获得$\theta$的0.95置信区间和估计标准差。用非参数Bootstrap方法获得$\theta$的0.95置信区间和估计标准差
+
+```{r}
+X<-rnorm(100, mean = 5, sd = 1)
+Theta<-exp(mean(X))
+
+n <- 20
+B <- 1000
+
+# 参数Bootstrap
+
+TBoot.theta.par<-NULL
+
+for ( i in 1:B){
+  Xsample <- rnorm(n, mean=mean(X), sd=1)
+  Tboot.theta<-exp(mean(Xsample))
+  TBoot.theta.par<-c(TBoot.theta.par, Tboot.theta)
+}
+
+Lc1.par<-2*Theta-quantile(TBoot.theta.par, 0.975)
+Uc1.par<-2*Theta-quantile(TBoot.theta.par,0.025)
+
+Sd.theta.par<-sd(TBoot.theta.par)
+
+print(paste0("Parametric Bootstrap Pivot CI : ", "[",Lc1.par," ,",Uc1.par,"]" ))
+print(paste0("Parametric Bootstrap Sd. : ", Sd.theta.par))
+
+# 非参数Bootstrap
+
+TBoot.theta.npar<-NULL
+
+for ( i in 1:B){
+  Xsample<-sample(X,n,T)
+  Tboot.theta<-exp(mean(Xsample))
+  TBoot.theta.npar<-c(TBoot.theta.npar, Tboot.theta)
+}
+
+Lc1.npar<-2*Theta-quantile(TBoot.theta.npar, 0.975)
+Uc1.npar<-2*Theta-quantile(TBoot.theta.npar,0.025)
+
+Sd.theta.npar<-sd(TBoot.theta.npar)
+
+print(paste0("Nonparametric Bootstrap Pivot CI : ", "[",Lc1.npar," ,",Uc1.npar,"]" ))
+print(paste0("Nonparametric Bootstrap Sd. : ", Sd.theta.npar))
+```
+
+可以看出参数法的置信区间要大于非参数方法，并且bootstrap标准差比非参数bootstrap标准差大一些
+
+(2)
+
+```{r}
+hist(TBoot.theta.par)
+
+hist(TBoot.theta.npar)
+
+```
+
+对比参数方法和非参数方法的估计直方图，可以看出参数法的分布要比非参数法得到的分布更加光滑，$\theta$呈现出对数正态分布
+
+## 1.5
+
+**为考察两种生产方式的生产效率是否有显著差异，随机抽取10人用方法A进行生产，抽取12人用方法B进行生产，并记录下22人的日产量。请问两种方法生产效率的影响不同吗？用wilcox.test应该怎样设置假设？得到怎样的结果？该问题可以用随机游程方法来解决吗？**
+
+比较两种生产方式对生产效率的影响，使用wilcoxon检验应当做如下假设
+
+$$H_0:A和B的生产效率分布的位置偏移为0 \leftrightarrow H_1: A和B的生产效率分布的位置偏移不为0$$
+
+```{r}
+A<-c(92,69,72,40,90,53,85,87,89,88)
+B<-c(78,95,58,65,39,67,64,75,60,80,83,96)
+
+wilcox.test(A,B)
+
+```
+
+通过wilcoxon检验，得到pvalue=0.381>0.05，从而不拒绝原假设,认为两种生产方法的效率无显著差别
+
+下面进行随机游程检验，将所有数据混合后排序，并将A组数据标1，B组数据标0，这样如果两种生产效率相同，那么谁生产效率高是完全随机分布的
+
+```{r}
+sort(A)
+sort(B)
+library(tseries)
+run<-c(0,1,1,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0)
+runs.test(as.factor(run))
+```
+
+得到pvalue=0.03<0.05，从而拒绝原假设，认为两种生产方法生产效率有显著差异
+
+## 1.6
+
+**抑郁症发病率是否与季节有关？**
+```{r}
+# 进行卡方检验
+dep<-c(495,503,491,581)
+chisq.test(dep)
+```
+
+根据卡方检验,pvalue=0.0145<0.05,从而拒绝原假设，认为抑郁症发病率与季节有关
+
+## 1.6
+
+**Suppose the cure rate for the standard treatment of a disease is 0.60.A new drug has been developed for the disease and it is thought that the curerate for patients using it will exceed 0.60. In a small clinical trial 48 patient shaving the disease were treated with the new drug and 34 were cured.**
+
+(1) Let p be the probability that a patient having the disease is cured by the new drug. Write the hypotheses of interest in terms of p
+
+
+$$H_0:p=0.6 \leftrightarrow H_1:p\gt 0.6$$
+
+(2) Determine the p-value for the clinical study. What is the decision for a nominal level of 0.05 ?
+
+```{r}
+z.score <- (34/48-0.6)/sqrt(0.6*0.4/48)
+1-pnorm(z.score)
+```
+
+根据检验，得到pvalue=0.063>0.05,因此不能拒绝原假设
+
+## 1.7
+
+**Let p be the probability of success. Suppose it is of interest to test $H_0 : p = 0.30 \leftrightarrow H_A : p < 0.30$. Let S be the number of successes out of 75 trials. Suppose we reject $H_0$ , if $S \leq 16$**
+
+(1) Determine the significance level of the test.
+
+```{r}
+z.score<-(16/75-0.3)/sqrt(0.3*0.7/75)
+print(paste0("Significance level is : ",pnorm(z.score)))
+```
+
+(2) Determine the power of the test if the true p is 0.25
+
+```{r}
+pow.test<-pnorm(z.score+0.05/sqrt(0.3*0.7/75))
+print(paste0("The power of the test is: ", pow.test))
+```
+
+(3) Determine the power function for the test for the sequence for the probabilities of success in the set ${0.02,0.03,\cdots,0.35}$. Then obtain
+a plot of the power curve.
+
+```{r}
+suc<-seq(0.02:0.35,by=0.01)
+
+# power function
+pow<-pnorm(z.score+(0.3-suc)/sqrt(0.3*0.7/75))
+plot(suc, pow)
+```
+
+# 问题2
+
+## 2.1
+
+**在一项研究毒品对人体攻击性影响的实验中，组A使用安慰剂，组B使用毒品。实验后进行攻击性测试，测量得分如下**
+
+(1) 请给出这个实验的原假设
+
+考虑来自A组的样本独立同分布于$F_1(x)$,B组的样本独立同分布于$F(y-\mu)$,原假设可以表述为
+
+$H_0:\mu=0$
+
+(2) 画出表现这些数据特点的曲线图
+```{r}
+A<-c(10,8,12,16,5,9,7,11,6)
+B<-c(12,15,20,18,13,14,9,16)
+
+# 画出两组数据的直方图和箱线图
+hist(A)
+boxplot(A)
+hist(B)
+boxplot(B)
+```
+
+(3) 分析这些数据用哪种检验方法最合适
+
+```{r}
+# 计算两组数据方差和中位数的距离
+abs(var(A)-var(B))
+abs(median(A)-median(B))
+```
+
+从方差角度来看，A，B两组方差基本相同而中位数相差较大，可以假定两组数据的分布存在一个位置漂移，因而可以采用Brown-Mood检验或者Wilcoxon-Mann-Whiteney秩和检验，而后者可以利用样本更多信息，并且无对称假定，因而采取Wilcoxon-Mann-Whiteney秩和检验
+
+(4) 用你选择的检验对数据进行分析
+
+```{r}
+wilcox.test(A,B)
+```
+
+(5) 是否有足够的证据拒绝原假设？如何解释数据
+
+检验得到pvalue=0.0122<0.05,因而可以拒绝原假设，认为$\mu \not= 0$, 换而言之认为二者的中位数有显著差异
+
+## 2.2
+
+**针对例3.1进行如下操作：**
+
+(1) 给出0.25分位数的检验内容
+
+$$H_0 : A组的0.25分位数=B组的0.25分位数$$
+
+```{r}
+BM.test<-function(x,y,alt,p=0.5){
+  xy <- c(x,y)
+  per.xy<-quantile(xy, p)
+  t<- sum(xy>per.xy)
+  lx<-length(x)
+  ly<-length(y)
+  lxy <- lx+ly
+  A<- sum(x>per.xy)
+  if(alt == "greater"){
+    w<-1-phyper(A-1,lx,ly,t)
+  }
+  else if(alt == "less"){
+    w<-phyper(A-1,lx,ly,t)
+  }
+  conting.table <- matrix(c(A,lx-A,lx,t-A,ly-(t-A),ly,t,lxy-t,lxy),3,3)
+  col.name<-c("X","Y","XY")
+  row.name<-c(">PXY", "<PXY", "TOTAL")
+  dimnames(conting.table)<-list(row.name, col.name)
+  list(contingency.table=conting.table, p.value = w)
+}
+
+BM.test(A,B,"less",0.25)
+```
+
+(2) 应用(1)的结果分析两组数据的0.25分位数是否有差异，对结果进行合理解释
+
+得到Brown-mood检验的pvalue=0.0068<0.01,从而拒绝原假设，认为A组和B组的0.25分位数有显著性差异
+
+(3) 给出0.75分位数的检验内容(包括原假设、过程、决策)
+
+$$H_0 : A组的0.75分位数=B组的0.75分位数$$
+
+```{r}
+BM.test(A,B,alt = "less",0.75)
+```
+
+(4) 应用(3)的结果分析两组数据的0.75分位数是否有差异，对结果进行合理解释
+
+得到Brown-mood检验的pvalue=0.03<0.05,从而拒绝原假设，认为A组和B组的0.75分位数有显著性差异
+
+## 2.3
+
+**从最近雇佣的职员中随机选出22人，一般接受人际关系方面的课程训练，剩下11人组成控制组。在训练之后，22个人都在一个与顾客的模拟会面中被观察，观察者以20分制对他们的表现进行评级，得分越高，评级越高**
+
+(1) 这项研究的原假设和备择假设各是什么？
+
+$$H_0: 两组得分分布的位置漂移为0\leftrightarrow H_1: 两组得分分布的位置漂移不为0$$
+
+(2) 画出这些表示数据特点的曲线图
+
+```{r}
+trained<-c(18,15,9,10,14,16,11,13,19,20,6)
+ctrl<-c(12,13,9,8,1,2,7,5,3,2,4)
+
+# 画出直方图和箱线图
+hist(trained)
+boxplot(trained)
+hist(ctrl)
+boxplot(ctrl)
+```
+
+(3) 你认为分析这些数据用哪种检验方法最合适？
+
+```{r}
+abs(var(ctrl)-var(trained))
+abs(median(ctrl)-median(trained))
+```
+
+我认为采用Wilcoxon-Mann-Whiteney秩和检验进行分析比较合理，两组数据方差差距不大，而中位数相差很大，因而可以认为他们的分布存在一个位置漂移，而且该检验可以利用样本更多信息，并且无对称假定，因而采取Wilcoxon-Mann-Whiteney秩和检验
+
+(4) 用你的检验方法对这些数据进行分析
+
+```{r}
+wilcox.test(trained, ctrl)
+```
+
+(5) 是否有足够的证据拒绝原假设？如何解释数据？
+
+根据检验结果，得到pvalue=0.0016<0.01,从而可以拒绝原假设，认为两组数据分布存在一个明显的不为零的位置漂移
+
+# 3
+
+## 3.1
+
+**为考察学生的阅读理解能力，对10名学生训练前后的阅读能力测试结果如下。请设计置换实验，根据如下数据进行阅读训练前后阅读测试能力变化差值d的wilcoxon检验，请计算p值**
+
+$$H_0:训练前后阅读能力无差异\leftrightarrow H_1: 训练后能提高阅读能力$$
+
+```{r }
+untrained<-c(61,69,68,62,74,95,89,68,71,59)
+trained<-c(68,67,73,65,79,93,85,70,73,69)
+
+d<-trained-untrained
+dpm<-c(d,-d)
+
+#每次抽取n个
+n<-length(d)
+
+#共进行B次
+B<-500
+
+dbs<-matrix(sample(dpm,n*B,replace = T), ncol = n)
+wilcox.teststat<-function (x)wilcox.test(x)$statistic
+bs.teststat<-apply(dbs,1,wilcox.teststat)
+mean(bs.teststat>=wilcox.teststat(dpm))
+```
+
+得到置换检验的pvalue=0，从而拒绝原假设，认为训练后对学生阅读能力有提升

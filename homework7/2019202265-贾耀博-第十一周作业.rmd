@@ -1,0 +1,269 @@
+---
+title: "2019202265-贾耀博-第十一周作业"
+output:
+  html_document:
+    css: style.css
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+# 4.1
+
+**对A，B，C三个灯泡生产的灯泡进行寿命测试，每个品牌随机试验不等量的灯泡。结果得到如下寿命数据，试比较三个品牌灯泡寿命是否相同**
+
+```{r}
+lamp<-c(83,64,67,62,70,85,81,80,78,88,89,79,90,95)
+gr.lamp<-c(rep(1,5),rep(2,4),rep(3,5))
+kruskal.test(lamp, gr.lamp)
+```
+
+根据Kruskal-Wallis检验，p值为0.02001<0.05,从而拒绝原假设，认为三组灯泡寿命不同
+
+# 4.2
+
+**在R中编写程序，完成例4.7中的Dunn检验**
+
+```{r}
+library(tidyverse)
+
+SE<-function(n_i,n_j){
+  mst<-(25)*(25+1)/12
+  return (sqrt(mst*(1/n_i+1/n_j)))
+}
+
+Dij<-function (x,y, mean_rank_x, mean_rank_y){
+  se<-SE(length(x), length(y))
+  return (abs(mean_rank_x-mean_rank_y)/se)
+}
+
+A <- c(80,203,236,252,284,368,457,393)
+B <- c(133,180,100,160)
+C <- c(156,295,320,448,465,481,279)
+D <- c(194,214,272,330,386,475)
+A.mean_rank <- 13
+B.mean_rank <- 4
+C.mean_rank <- 16.7
+D.mean_rank <- 14.7
+z<-2.638
+
+# A vs B
+AB<- c("A VS B",SE(length(A), length(B)),Dij(A,B, A.mean_rank, B.mean_rank))
+# A vs C
+AC<- c("A VS C",SE(length(A), length(C)),Dij(A,C, A.mean_rank, C.mean_rank))
+# A vs D
+AD<- c("A VS D",SE(length(A), length(D)),Dij(A,D, A.mean_rank, D.mean_rank))
+# B vs C
+BC<- c("B VS C",SE(length(B), length(C)),Dij(B,C, B.mean_rank, C.mean_rank))
+# B vs D
+BD<- c("B VS D",SE(length(B), length(D)),Dij(B,D, B.mean_rank, D.mean_rank))
+# C vs D
+CD<- c("C VS D",SE(length(C), length(D)),Dij(C,D, C.mean_rank, D.mean_rank))
+
+dt.drug<-rbind(AB,AC,AD,BC,BD,CD)
+dt.drug<-as.data.frame(dt.drug,col.names=c("Comparison","SE","dij"))
+
+print(dt.drug)
+
+```
+
+由上表所示四种药物疗效比较结果可知，仅B与C有显著性差异，其他疗效都不存在显著性差异
+
+# 4.3
+
+**假设有10个独立假设检验，得到如下有顺序的p值，在$\alpah=0.05$ 的显著性水平下，计算Benferroni检验和BH检验拒绝原假设的个数**
+
+```{r}
+pvalues<-c(0.00017,0.00448,0.00671,0.00907,0.01220,0.33626,0.39341,0.53882,0.58125,0.98617)
+
+alpha <- 0.05
+
+m<-length(pvalues)
+
+# Benferroni
+
+sum(pvalues<alpha/m)
+
+# BH
+bh<-0
+for (i in seq_along(pvalues)){
+  if(pvalues[i]<= i*alpha/m){
+    bh <- bh + 1
+  }
+}
+bh
+
+
+```
+
+使用Benferroni检验拒绝原假设个数为2，使用BH检验拒绝原假设个数为5
+
+# 4.4
+
+**针对例4.5的第一组15个检验的数据，编写函数使用IF-PCA方法计算HC值，它拒绝原假设的数量与例题中的结果一样吗？**
+
+```{r}
+pvalues<-c(0.0024,0.0056,0.0096,0.0121,0.0201,0.0278,0.0298,0.0344,0.0349,0.3240,0.4262,0.5719,0.6528,0.7590,1.000)
+
+# IF-PCA
+
+IF_PCA <- function (pvals){
+  p<-length(pvals)
+  HCp<-NULL
+  for ( k in seq_along(pvals)){
+    HCpk<-sqrt(p)*(k/p-pvals[k])/(sqrt(k/p+max(sqrt(k/p-pvals[k]),0)))
+    HCp<-c(HCp, HCpk)
+  }
+
+  return (HCp)
+}
+
+HCp<-IF_PCA(pvalues)
+plot(HCp)
+```
+
+可以看出根据IF-PCA方法同样在9处取得最大值，与例题得到的结果一致
+
+# 4.5
+
+**请对第一章的问题2里的Gordon研究，通过习题4.4编写的程序进行基因的有效性检验，绘制HC图，判断无效基因的数量**
+
+```{r}
+gene <- read.table("/Users/jiayaobo/PycharmProjects/nonparams/homework7/EX181.txt", header = T)
+gene <- gene[, !names(gene) %in% c("ProbeSet")]
+alpha<-0.05
+pvals<-rep(0,12533)
+for (i in  2:12533){
+  d<-as.numeric(gene[i, ])
+  pvals[i-1]<-ks.test(d[32:181],d[2:31])$p.value
+}
+```
+
+```{r}
+pvals <- sort(pvals)
+HCps<-IF_PCA(pvals = pvals)
+plot(HCps)
+```
+
+根据HC图可以得知大概在7700处取得最大值，因而无效基因数量大概为4830左右
+
+# 4.6
+
+**下表是美国三大汽车公司的5种不同的车型某年产品的油耗，在R中编写函数完成Hodge-Lehmmann调整秩和检验。试分析不同公司产品的油耗是否存在差异，请将Freidman检验和Hodges-Lehmmann调整秩和检验的结果进行比较**
+
+```{r}
+A<-c(20.3,21.2,18.2,18.6,18.5)
+B<-c(25.6,24.7,19.3,19.3,20.7)
+C<-c(24.0,23.1,20.6,19.8,21.4)
+
+
+HL.test <- function (x,y,z){
+  b<-length(x)
+  k<-3
+  ao_x <- x - mean(x)
+  ao_y <- y - mean(y)
+  ao_z <- z- mean(z)
+
+  xyz.rank <- rank(c(ao_x,ao_y,ao_z))
+  x.rank<-xyz.rank[seq_along(x)]
+  y.rank<-xyz.rank[(length(x)+1):(length(x)+length(y))]
+  z.rank<-xyz.rank[-seq_along(z)]
+  x.mean_rank <- mean(x.rank)
+  y.mean_rank <- mean(y.rank)
+  z.mean_rank <- mean(z.rank)
+
+  Ri_mean<-NULL
+  for ( i in seq_along(x)){
+    Ri_mean<-c(Ri_mean,(x.rank[i]+y.rank[i]+z.rank[i])/3)
+  }
+  s <- 0
+  for (i in length(x)){
+    for (j in 1:k){
+      s <- s+(x.rank[i]-Ri_mean[i])^2+(y.rank[i]-Ri_mean[i])^2+(z.rank[i]-Ri_mean[i])^2
+    }
+  }
+
+  ss<-(x.mean_rank-(k*b+1)/2)^2+(y.mean_rank-(k*b+1)/2)^2+(z.mean_rank-(k*b+1)/2)^2
+  c<-(k-1)*b^2/s
+  Q<-c*ss
+  return (Q)
+}
+
+Q<-HL.test(A,B,C)
+pchisq(Q, 3-1,lower.tail = F)
+
+treat.Car <- rep(c(1,2,3,4,5),3)
+block.Car <- c(rep(1,5), rep(2,5), rep(3,5))
+Car <- c(A,B,C)
+friedman.test(Car, treat.Car,  block.Car)
+```
+
+根据HL检验pvalue=0.220>0.05,根据friedman检验pvalue=0.03875<0.05,从而通过了HL检验而未通过Friedman检验
+
+# 4.7
+
+**在一项健康测试中有三中生活方式，他们的减肥效果如下表所示。人们想知道从这些数据中是否能得到他们减肥效果一样的结论，如果减肥效果不同，试根据以上数据选择方法检验哪种效果更好，哪种最差**
+
+```{r}
+library(clinfun)
+A <- c(3.7,3.7,3.0,3.9,2.7)
+B <- c(7.3,5.2,5.3,5.7,6.5)
+C <- c(9.0,4.9,7.1,8.7)
+n<-c(5,5,4)
+ABC <- list(A,B,C)
+group_label <- as.ordered(factor(rep(1:length(n),n)))
+jonckheere.test(unlist(ABC), group_label, alternative="increasing")
+```
+
+根据JT检验，p值为0.0009<0.001，从而拒绝原假设，三种生活方式减肥效果不一样，第一种最差，第三种最好
+
+# 4.8
+
+**为考察三位推销员甲、乙、丙的推销能力，设计实验，让推销员向制定的12位客户推销商品，若客户对推销员的推销服务满意则给1分，否则给0分。试检验三位推销员的推销效果是否相同。请问该题目可以使用$\chi^2$检验进行分析吗？请讨论比较的结论**
+
+```{r}
+# 使用Cochran检验
+
+salesman1 <- c(1,1,1,1,1,1,0,0,1,1,1,0)
+salesman2 <- c(0,1,0,1,0,0,0,1,0,0,0,0)
+salesman3 <- c(1,0,1,0,0,1,0,1,0,0,0,1)
+salesman <- matrix(c(salesman1, salesman2, salesman3), nrow=10, ncol=3)
+nidot.salesman <- apply(salesman,1,sum)
+ndotj.salesman <- apply(salesman,2,sum)
+k <- ncol(salesman)
+Q <- (k-1)*(k*sum(ndotj.salesman^2)-(sum(ndotj.salesman))^2)/(k*sum(nidot.salesman)-sum(nidot.salesman^2))
+pvalue.salesman <- pchisq(Q,k-1,lower.tail = F)
+pvalue.salesman
+```
+
+由于p=0.0724，从而使用Cochron检验，我们接受原假设，表明三种售货员的销售能力相同，但是明显看出第一名销售员的推销能力要强于另外两位，这表明给定显著性水平下，三位推销员共同放到一起进行检验，两位表现相近的销售员会抵消一位表现突出的推销员的表现，因而本情况不太适合用卡方检验
+
+# 4.9
+
+**现有A,B,C,D,4种驱蚊药剂，在南部4个地区试用，观察试验结果。受试验条件所限，每种药剂只在三个地区试验，每一试验试用400只蚊子，其死亡数据如下。如何检验4种药剂的药效是否不同**
+
+```{r}
+# Durbin 不完全区组分析法
+t<-3
+k<-4
+r<-3
+v<-4-1
+x1 <- c(356,338,372)
+x2 <- c(320, 340,308)
+x3 <- c(359, 380, 332)
+x4<- c(385, 390, 348)
+ndotj <- c(6, 6, 9, 3)
+Eri <- r*(t+1)/2
+
+Q <- 12*(k-1)/(r*k*(t^2-1))*(sum((ndotj-Eri)^2))
+
+pchisq(Q, k-1, lower.tail = F)
+
+```
+
+根据卡方检验，pvalue=0.08>0.05，从而不拒绝原假设，认为三种驱药剂药效相同

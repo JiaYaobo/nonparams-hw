@@ -1,0 +1,99 @@
+---
+title: "非参大作业"
+author: "吕良波"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+## 大作业胜率分析部分
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+&emsp;&emsp;我们将中国队的得分与失分看作0-1马尔科夫链并计算对应的状态转移矩阵。由矩阵我们可以得到:
+\begin{equation}
+P_{00}=\frac{n_{00}}{n_{00}+n_{01}}   \hspace{5em}     P_{11}=\frac{n_{11}}{n_{11}+n_{10}}
+\end{equation}
+其中，n表示在过往回合记录的总和。由上以及胜率公式我们可以计算出对应的胜率为:
+\begin{equation}
+P_1=\frac{1-P_{00}}{2-P_{00}-P_{11}}
+\end{equation}
+因此，我们根据胜率计算公式计算5局的胜率并进行作图分析。
+```{r fig.width=6, fig.height=6, fig.align='center'}
+#读入数据
+data=read.csv("/Users/jiayaobo/PycharmProjects/nonparams/groupwork/volleyball.csv",encoding="UTF-8")
+```
+```{r}
+#将数据五局分开
+column=data[,2]
+score1=data[column==1,1]
+score2=data[column==2,1]
+score3=data[column==3,1]
+score4=data[column==4,1]
+score5=data[column==5,1]
+```
+```{r}
+#设定函数计算每一阶段的胜率
+scorefunction=function(s){
+  #计算过往比赛记录
+  n00=0
+  n11=0
+  n10=0
+  n01=0
+  P00=0
+  P11=0
+  #胜率向量
+  winpro=rep(0,length(s)-1)
+  for(i in 2:length(s)){
+    #每一个记录和前一个进行比较不断计算对应的胜率
+    if(s[i-1]==0 && s[i]==0){
+      n00=n00+1
+    }
+    else if(s[i-1]==1 && s[i]==0){
+      n10=n10+1
+    }
+    else if(s[i-1]==0 && s[i]==1){
+      n01=n01+1
+    }
+    else{
+      n11=n11+1
+    }
+    #计算P00和P11，当分母为0时，我们认为对应的值为0
+    if(n00+n01>0){
+      P00=n00/(n00+n01)
+    }
+    if(n11+n10>0){
+      P11=n11/(n11+n10)
+    }
+    winpro[i-1]=(1-P00)/(2-P00-P11)
+  }
+    return(winpro)
+}
+```
+```{r fig.width=6, fig.height=6, fig.align='center'}
+#做出对应的图象
+plt=function(s,string,title){
+x=c(1:(length(s)-1))
+y=scorefunction(s)
+plot(x,y,ylim = c(0.2,1),type="o",pch=16,col=string,xlab = "回合数",ylab="胜率",main=title)
+abline(h=0.5)
+}
+plt(score1,"limegreen","第一局比赛")
+plt(score2,"skyblue","第二局比赛")
+plt(score3,"red","第三局比赛")
+plt(score4,"limegreen","第四局比赛")
+plt(score5,"skyblue","第五局比赛")
+
+```
+&emsp;&emsp;我们首先定义局点。我们认为在一局中局点代表了个体能力的转折时刻，同时也代表了相对能力的转折时刻。因此我们从中衍生出两种不同的定义方式。对于任意一个队，他们胜率的局点定义为胜率发生显著转折的时刻。或者，对于任意一个队，他们胜率的局点定义为相对优势发生明显变化的时刻。我们在下面对这两种定义进行一一阐释。
+
+&emsp;&emsp;第一种定义：胜率发生显著转折意味着我们从该局点之后，我们可以得到在较长时间内胜率整体发展趋势的方向保持不变，可以理解为一个连续函数显著变化的极大值和极小值点。在第一场、第二场比赛的初期我们可以看到，中国队的胜率先下降后上升，说明在开始阶段中国队可能需要一定的时间去慢热。而后面三局的初期，中国队的胜率小幅度上升之后迎来了较大的跌幅。因此我们可以将这几局初期的时刻定义为局点，在这个时刻，一方面由于数据量较少，胜率的计算变化幅度较大，另一方面，也与运动员在一局初的状态相关。当然我们可以看到在每一局的后期，中国队的胜率趋向平稳，一方面说明两队的实力相当，另一方面，也可以反映出两队的心理素质相对较高，没有出现溃败的情况。
+
+&emsp;&emsp;第二种定义：相对优势发生明显变化的时刻定义为在这个时刻之后，所在队伍的胜率在较长的时间段内保持在0.5以上或者以下，与时刻之前的胜率分布发生较大变化。保持在0.5以上，说明在球技、手感等状态中占据优势，更有可能赢下该局，保持在0.5以下，说明在以上状态中占据劣势，需要调整和反思。在图中我们将胜率为0.5的直线画出。我们可以看到，在第一局中，中国队的胜率基本都在0.5以下，可能是因为中国队状态没有进入的原因。而后面几局中显著的局点出现在第二局的中后期和第三局的中期，第二期中后期，中国队的胜率基本持续保持在0.5以上，一转之前的颓势，而第三局中期之后，中国队的胜率持续低于0.5，在第三局有被一击而溃的情况出现，到后期队员的心态可能也受到了较大的影响。而在第四局和第五局中国队的比拼相对焦灼，在这个时候，我们所定义的局点并没有显著的出现。
+
+

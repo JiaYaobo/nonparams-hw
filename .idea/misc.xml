@@ -4,6 +4,28 @@
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
       <map>
+        <entry key="file://$PROJECT_DIR$/groupwork/score_series.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="lastOutput" value="$PROJECT_DIR$/groupwork/score_series.html" />
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/groupwork" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/groupwork/非参大作业.Rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/groupwork" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/groupwork/非参小组作业.Rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/groupwork" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
         <entry key="file://$PROJECT_DIR$/homework1/2019202265-贾耀博-第二周作业.rmd">
           <value>
             <RMarkdownRenderProfile>
@@ -71,6 +93,37 @@
             <RMarkdownRenderProfile>
               <option name="lastOutput" value="$PROJECT_DIR$/homework5/2019202265-贾耀博-第六周作业.html" />
               <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/homework5" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/homework6/2019202265-贾耀博-第七八周作业.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="lastOutput" value="$PROJECT_DIR$/homework6/2019202265-贾耀博-第七八周作业.html" />
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/homework6" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/homework7/2019202265-贾耀博-第十一周作业.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="lastOutput" value="$PROJECT_DIR$/homework7/2019202265-贾耀博-第十一周作业.html" />
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/homework7" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/homework8/2019202265-贾耀博-第十二周作业.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/homework8" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
+        <entry key="file://$PROJECT_DIR$/zhanshi/贾耀博-3.1.5.rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="lastOutput" value="$PROJECT_DIR$/zhanshi/贾耀博-3.1.5.html" />
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/zhanshi" />
             </RMarkdownRenderProfile>
           </value>
         </entry>

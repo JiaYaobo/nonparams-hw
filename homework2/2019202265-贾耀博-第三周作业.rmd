@@ -98,10 +98,8 @@ null_hypo_rate <- seq(0,1, by=0.02)
 #备择假设空间
 alter_hypo_rate <- seq(1,2, by=0.02)
 
-alpha1 <- c() #第一类错误
-beta1<-c() #第二类错误
-
-
+alpha1 <- NULL #第一类错误
+beta1<-NULL #第二类错误
 for (lambda in null_hypo_rate)
 {
   alpha1<-append(alpha1,1-ppois(116,lambda = 100*lambda)) # 计算第一类错误概率
@@ -145,7 +143,7 @@ dt %>% ggplot() +
         geom_line(aes(x=rep(1,51), y=seq(0,1,length.out = 51)))+
         annotate("text", x=0.5,y=0.25,label="Type One Error")+
         annotate("text", x=1.5,y=0.25,label="Type Two Error")+
-        xlab("lambda")+
+        xlab(expression(lambda))+
         ylab("Probability")
 
 
@@ -154,7 +152,7 @@ dt %>% ggplot() +
 
 从图像中观察可以发现，在$C=113$的情况下，使得犯第一类错误和第二类错误概率相等的时候，第一类错误概率确定的情况下，第二类错误概率就等于第一类错误概率，于是第二类错误概率能够被完全控制，因此在完全不能使两类错误概率相等时的备择假设空间中$\lambda$的范围即为弃权域，为$1<\lambda<1.25$
 
-同理，当$C=117$时，弃权域的范围为$1<\lambda<1.85$,可以看出$C=117$比$C=113$的弃权域的范围更大一些
+同理，当$C=117$时，弃权域的范围为$1<\lambda<1.35$,可以看出$C=117$比$C=113$的弃权域的范围更大一些
 
 ## 1.2
 
